@@ -1,0 +1,43 @@
+{
+  "measuredAt": "2026-10-03",
+  "plugin": {
+    "commit": "052b23622b087acbb493d18e994b3448e5aa4c77"
+  },
+  "demo": {
+    "commit": "55f7d9212fdf44a89bae9187025bf9891def3e37"
+  },
+  "android": {
+    "releaseApkBytes": {
+      "with": 3389588,
+      "without": 2737567,
+      "added": 652021
+    },
+    "coldStartMs": {
+      "with": 830,
+      "without": 697,
+      "added": 133,
+      "device": "Pixel_9_Pro emulator, headless with the host GPU, Android 17 (API 37)",
+      "runsMs": {
+        "with": [959, 830, 803, 776, 860],
+        "without": [812, 718, 697, 673, 597]
+      }
+    }
+  },
+  "ios": {
+    "simulatorAppBytes": {
+      "with": 4552419,
+      "without": 996065,
+      "added": 3556354
+    },
+    "coldStartMs": {
+      "with": 1339,
+      "without": 1281,
+      "added": 58,
+      "device": "iPhone 17 Pro simulator, iOS 26.5",
+      "runsMs": {
+        "with": [2904, 1296, 1255, 1386, 1339],
+        "without": [1728, 1295, 1281, 1280, 1265]
+      }
+    }
+  }
+}

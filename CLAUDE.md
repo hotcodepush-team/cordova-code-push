@@ -18,6 +18,7 @@ src/ios                the Cordova plugin, the bundle loader and the scheme-task
 src/android            the Cordova plugin and the bundle loader over com.hotcodepush:protocol-android, and the Gradle reference
 scripts/embed.js       the after_prepare hook: npx hotcodepush bundle embed per prepared platform
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
+benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 ```
 
 The native cores live in `protocol-ios` and `protocol-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module through JitPack by commit in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
