@@ -26,8 +26,12 @@ jobs:
       - run: npx eslint . && npx prettier --check .
       - run: npm run build
   android:
-    name: Build the plugin into an Android app
+    name: Build the plugin into an Android app (cordova-android ${{ matrix.cordova-android }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The two majors the plugin supports.
+        cordova-android: ['15.1.0', '14.0.1']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -40,7 +44,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - uses: gradle/actions/setup-gradle@v5
       - run: npm ci
-      - run: npm run verify:android
+      - run: npm run verify:android -- ${{ matrix.cordova-android }}
   ios:
     name: Build the plugin into an iOS app
     runs-on: macos-latest

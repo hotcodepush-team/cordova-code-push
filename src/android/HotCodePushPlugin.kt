@@ -11,6 +11,7 @@ import com.hotcodepush.protocol.Clock
 import com.hotcodepush.protocol.Configuration
 import com.hotcodepush.protocol.Core
 import com.hotcodepush.protocol.CoreListener
+import com.hotcodepush.protocol.DebugScreen
 import com.hotcodepush.protocol.DeviceFacts
 import com.hotcodepush.protocol.DownloadStrategy
 import com.hotcodepush.protocol.FileStore
@@ -169,13 +170,13 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         runVoid(callbackContext) { it.setRestartAllowed(allowed) }
     }
 
-    /** The debug screen arrives with the shared Android core; until then the call resolves and shows nothing. */
     private fun showDebugScreen(callbackContext: CallbackContext) {
+        val core = core
         if (core == null) {
             callbackContext.error(NOT_CONFIGURED_MESSAGE)
             return
         }
-        LOG.i(TAG, "The debug screen is not available yet.")
+        DebugScreen.show(cordova.activity, core)
         callbackContext.success()
     }
 

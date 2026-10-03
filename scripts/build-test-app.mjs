@@ -5,16 +5,19 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // The check that the plugin compiles: a fresh Cordova app in a temporary directory, the platform at the version this
-// repository pins, the plugin added from this checkout, and a debug build; the embed step is the CLI's and stays out.
-// Usage: node scripts/build-test-app.mjs android|ios
+// repository pins or the one named, the plugin added from this checkout, and a debug build; the embed step is the
+// CLI's and stays out.
+// Usage: node scripts/build-test-app.mjs android|ios [platform version]
 
 const PLATFORMS = ['android', 'ios'];
 const pluginDirectory = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cordova = join(pluginDirectory, 'node_modules', '.bin', 'cordova');
-const [platform] = process.argv.slice(2);
+const [platform, platformVersion] = process.argv.slice(2);
 
 if (!PLATFORMS.includes(platform)) {
-  console.error('Usage: node scripts/build-test-app.mjs android|ios');
+  console.error(
+    'Usage: node scripts/build-test-app.mjs android|ios [platform version]',
+  );
   process.exit(2);
 }
 
@@ -53,7 +56,7 @@ try {
     [
       'platform',
       'add',
-      `${platform}@${devDependencies[`cordova-${platform}`]}`,
+      `${platform}@${platformVersion ?? devDependencies[`cordova-${platform}`]}`,
     ],
     appDirectory,
   );
