@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="@hotcodepush/cordova-code-push"
+    version="0.0.0">
+    <name>HotCodePush</name>
+    <description>Cordova code push by HotCodePush: the plugin that delivers over-the-air updates to your Cordova app</description>
+    <license>MIT</license>
+    <keywords>cordova,code push,hot code push,live updates,ota updates,over-the-air updates</keywords>
+
+    <engines>
+        <engine name="cordova-android" version=">=14.0.0" />
+        <engine name="cordova-ios" version=">=8.0.0" />
+    </engines>
+
+    <js-module src="dist/hotcodepush.js" name="HotCodePush">
+        <clobbers target="HotCodePush" />
+    </js-module>
+
+    <!-- The embed step: writes the resource file the SDK reads into each prepared platform and registers the store build. -->
+    <hook type="after_prepare" src="scripts/embed.js" />
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="HotCodePush">
+                <param name="android-package" value="com.hotcodepush.cordova.HotCodePushPlugin" />
+                <param name="onload" value="true" />
+            </feature>
+            <!-- The bridge and the core are Kotlin: the project's Kotlin plugin is on, at the version the core is compiled with. -->
+            <preference name="GradlePluginKotlinEnabled" value="true" />
+            <preference name="GradlePluginKotlinVersion" value="2.2.20" />
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        </config-file>
+        <framework src="src/android/hotcodepush.gradle" custom="true" type="gradleReference" />
+        <source-file src="src/android/CordovaBundleLoader.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
+        <source-file src="src/android/HotCodePushPlugin.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
+    </platform>
+
+    <!-- A Swift package: Package.swift names the sources and the core it is built on. -->
+    <platform name="ios" package="swift">
+        <config-file target="config.xml" parent="/*">
+            <feature name="HotCodePush">
+                <param name="ios-package" value="HotCodePushPlugin" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+    </platform>
+</plugin>

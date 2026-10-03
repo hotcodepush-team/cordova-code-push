@@ -1,0 +1,10 @@
+// The core comes from protocol-android at a pinned commit, built by JitPack until the library is published.
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.hotcodepush-team:protocol-android:d9360e0604e013ee7a2dfc2e58e13b90ac3d5e91'
+    implementation "androidx.webkit:webkit:${cordovaConfig.ANDROIDX_WEBKIT_VERSION}"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+}

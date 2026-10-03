@@ -1,0 +1,7 @@
+.build
+.claude
+dist
+node_modules
+package-lock.json
+src/android
+src/ios
