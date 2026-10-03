@@ -60,12 +60,12 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             LOG.e(TAG, NOT_CONFIGURED_MESSAGE)
             return
         }
-        val preferences = context.getSharedPreferences(defaultPreferencesName(context), Context.MODE_PRIVATE)
-        val loader = CordovaBundleLoader(context, preferences) { reloadStartPage() }
+        val store = SharedPreferencesStore(context.getSharedPreferences(defaultPreferencesName(context), Context.MODE_PRIVATE))
+        val loader = CordovaBundleLoader(context, store) { reloadStartPage() }
         val core = Core(
             configuration = configuration,
             device = deviceFacts(context),
-            store = SharedPreferencesStore(preferences),
+            store = store,
             files = FileStore(File(context.filesDir, "hotcodepush")),
             embedded = AssetsEmbeddedBundle(context, configuration.embeddedBundleManifest),
             http = OkHttpClientAdapter(),

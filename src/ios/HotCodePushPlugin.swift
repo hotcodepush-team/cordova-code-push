@@ -23,11 +23,12 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
             NSLog("[HotCodePush] %@", HotCodePushPlugin.notConfiguredMessage)
             return
         }
-        let loader = CordovaBundleLoader(viewController: viewController)
+        let store = UserDefaultsStore()
+        let loader = CordovaBundleLoader(viewController: viewController, store: store)
         let core = Core(
             configuration: configuration,
             device: HotCodePushPlugin.deviceFacts(),
-            store: UserDefaultsStore(),
+            store: store,
             files: FileStore(rootDirectory: CordovaBundleLoader.storeDirectory),
             embedded: AppBundleEmbeddedBundle(manifest: configuration.embeddedBundleManifest),
             http: UrlSessionHttpClient(),

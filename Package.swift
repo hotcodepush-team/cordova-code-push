@@ -21,7 +21,6 @@ let package = Package(
                 .product(name: "Cordova", package: "cordova-ios"),
                 .product(name: "HotCodePushProtocol", package: "protocol-ios")
             ],
-            path: "src/ios",
-            resources: [.copy("PrivacyInfo.xcprivacy")])
+            path: "src/ios")
     ]
 )

@@ -1,13 +1,13 @@
 package com.hotcodepush.cordova
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.webkit.MimeTypeMap
 import android.webkit.WebResourceResponse
 import com.hotcodepush.protocol.BundleLoader
 import com.hotcodepush.protocol.EmbeddedBundle
 import com.hotcodepush.protocol.EmbeddedBundleManifest
+import com.hotcodepush.protocol.KeyValueStore
 import com.hotcodepush.protocol.PlainException
 import com.hotcodepush.protocol.WebViewGate
 import java.io.File
@@ -19,7 +19,8 @@ import java.io.File
  */
 class CordovaBundleLoader(
     private val context: Context,
-    private val preferences: SharedPreferences,
+    /** The core's own store, so the bundle to serve at the next start lies beside the state it belongs to. */
+    private val store: KeyValueStore,
     private val reloadStartPage: () -> Unit,
 ) : BundleLoader {
     private val gate = WebViewGate()
@@ -35,7 +36,7 @@ class CordovaBundleLoader(
     }
 
     override fun persistServedBundle(bundleId: String?) {
-        preferences.edit().apply { if (bundleId == null) remove(SERVED_BUNDLE_KEY) else putString(SERVED_BUNDLE_KEY, bundleId) }.apply()
+        store.putString(SERVED_BUNDLE_KEY, bundleId)
     }
 
     override fun loadServedBundle(bundleId: String?) {
@@ -84,7 +85,7 @@ class CordovaBundleLoader(
     }
 
     /** The bundle the last run left to serve, as long as its directory is still there. */
-    private fun persistedBundleId(): String? = preferences.getString(SERVED_BUNDLE_KEY, null)?.takeIf { projectionDirectory(it).isDirectory }
+    private fun persistedBundleId(): String? = store.getString(SERVED_BUNDLE_KEY)?.takeIf { projectionDirectory(it).isDirectory }
 
     companion object {
         const val EMBEDDED_ASSET_PATH = "www"

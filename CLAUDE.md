@@ -49,6 +49,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The plugin's id is its package name, `@hotcodepush/cordova-code-push`: Cordova restores a plugin by looking its id up among `package.json`'s dependencies, and `cordova-ios` names the Swift package and its product after it.
 - A bundle is served on the app's own origin: the plugin answers Cordova's scheme handler on iOS and its asset loader on Android before Cordova does, from the bundle's directory under the store; no start page is swapped and no storage moves.
 - `cordova.js`, `cordova_plugins.js` and `plugins/` are the binary's under every bundle: a request for them is never answered from a bundle's directory.
+- The Swift package carries no resources: a package named after the scoped plugin id would lay its resource bundle under `@hotcodepush/` inside the app, so the plugin calls no required-reason API of its own, keeps the served bundle's key in the core's store, and leaves the privacy manifest to the core.
 - The resource file is `www/hotcodepush.json` in each platform, written after Cordova copied the web assets; the embedded bundle is the binary's `www`, addressed by the embedded manifest's hashes.
 - The plugin's `plugin.xml` sets `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion`, so an app adds the plugin and edits nothing; the app's own preference wins.
 

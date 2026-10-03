@@ -20,12 +20,15 @@ final class CordovaBundleLoader: BundleLoader {
 
     private let lock = NSLock()
     private let monitor = NWPathMonitor()
+    private let store: KeyValueStore
     private weak var viewController: CDVViewController?
     private var isMetered = false
     private var runningBundleId: String?
 
-    init(viewController: CDVViewController?) {
+    /// The store is the core's own, so the bundle to serve at the next start lies beside the state it belongs to.
+    init(viewController: CDVViewController?, store: KeyValueStore) {
         self.viewController = viewController
+        self.store = store
         runningBundleId = persistedBundleId()
         monitor.pathUpdateHandler = { [weak self] path in
             self?.isMetered = path.isExpensive || path.isConstrained
@@ -42,7 +45,7 @@ final class CordovaBundleLoader: BundleLoader {
     }
 
     func persistServedBundle(bundleId: String?) {
-        UserDefaults.standard.set(bundleId, forKey: CordovaBundleLoader.persistedBundleKey)
+        store.set(bundleId, forKey: CordovaBundleLoader.persistedBundleKey)
     }
 
     func loadServedBundle(bundleId: String?) {
@@ -83,7 +86,7 @@ final class CordovaBundleLoader: BundleLoader {
 
     /// The bundle the last run left to serve, as long as its directory is still there.
     private func persistedBundleId() -> String? {
-        guard let bundleId = UserDefaults.standard.string(forKey: CordovaBundleLoader.persistedBundleKey), FileManager.default.fileExists(atPath: projectionDirectory(bundleId: bundleId).path) else {
+        guard let bundleId = store.string(forKey: CordovaBundleLoader.persistedBundleKey), FileManager.default.fileExists(atPath: projectionDirectory(bundleId: bundleId).path) else {
             return nil
         }
         return bundleId
