@@ -34,6 +34,8 @@
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         </config-file>
         <framework src="src/android/hotcodepush.gradle" custom="true" type="gradleReference" />
+        <!-- The core verifies signatures through BouncyCastle, a jar Jetifier cannot read: it goes on Jetifier's ignore list. -->
+        <hook type="after_plugin_install" src="scripts/ignore-bouncycastle-in-jetifier.js" />
         <source-file src="src/android/CordovaBundleLoader.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
         <source-file src="src/android/HotCodePushPlugin.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
     </platform>

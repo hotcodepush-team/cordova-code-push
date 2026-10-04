@@ -27,6 +27,7 @@
   "files": [
     "dist/",
     "scripts/binary-create.js",
+    "scripts/ignore-bouncycastle-in-jetifier.js",
     "src/android/",
     "src/ios/",
     "Package.swift",
