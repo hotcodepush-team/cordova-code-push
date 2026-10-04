@@ -4,17 +4,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.hotcodepush-team:protocol-android:861bf2bc857dd47d8ce641894ee3bc88499d5a17'
+    implementation 'com.github.hotcodepush-team:protocol-android:36b1f01f43b986ae268dc1e1a8be43363fcb9348'
     implementation "androidx.webkit:webkit:${cordovaConfig.ANDROIDX_WEBKIT_VERSION}"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
-}
-
-// BouncyCastle, which the core verifies signatures with, carries the same OSGi manifest as other libraries an app
-// has; Android reads none of them, and the build refuses two files on one path.
-android {
-    packaging {
-        resources {
-            excludes += 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
-        }
-    }
 }
