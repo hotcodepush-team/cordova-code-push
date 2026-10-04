@@ -42,7 +42,7 @@
     "verify:ios": "npm run build && node scripts/build-test-app.mjs ios"
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@29e9725d8fa89d586f702bb491f0856c65661184"
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol-js/@hotcodepush/protocol@9314e1494f7c983385a634d4246be291802668ef"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
