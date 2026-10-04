@@ -12,7 +12,7 @@ cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcod
 
 A consumer pins a commit and bumps it deliberately; the preview comment on each commit names its `<sha>`. `npx hotcodepush init` runs the command for you and writes `hotcodepush.json`.
 
-The plugin needs `cordova-ios` 8 and `cordova-android` 14 or 15, and it wires itself: its `after_prepare` hook runs `npx hotcodepush bundle embed` on every `cordova prepare` and `cordova build`, which writes the resource file the SDK reads into each platform's `www` and registers the store build.
+The plugin needs `cordova-ios` 8 and `cordova-android` 14 or 15, and it wires itself: its `after_prepare` hook runs `npx hotcodepush binary create` on every `cordova prepare` and `cordova build`, which writes the resource file the SDK reads into each platform's `www` and creates the store build, the binary. Without a token on your machine, or with `HOTCODEPUSH_OFFLINE=1` for a build that is never shipped, the file names no channel and the build takes no updates; a pipeline without a token fails instead.
 
 The native cores are the Swift package `HotCodePushProtocol` and the Android library `com.hotcodepush:protocol-android`, each pinned to a commit until it is published. On iOS the plugin is a Swift package: `cordova-ios` adds it to the app, and Swift Package Manager resolves the core at the pinned revision on its own, without CocoaPods. On Android the plugin switches the project's Kotlin Gradle plugin on at the version the core is compiled with, through the `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion` preferences, and adds JitPack, which builds the pinned commit, to the app module's repositories; a preference in your own `config.xml` wins over either.
 

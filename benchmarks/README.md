@@ -14,7 +14,7 @@ What the plugin adds to an app, measured on the demo app and guarded from then o
 The first paint is the moment both variants take on their first animation frame and log as `[baseline] first paint <epoch ms>` once `deviceready` has fired: Cordova hands the web view's console to the host only after it loaded its plugins, which the first frame of an app with a plugin comes before. The line is read from logcat on Android and from the process's output on iOS through `simctl launch --console-pty`, since a pipe would buffer it until the process exits.
 The cold starts are measured on debug builds of both variants, each on a fresh install, while the sizes are measured on release builds.
 The "without" variant is the demo with the plugin removed — and with it its hook and its resource file — and the screen's script swapped for the same screen with nothing behind it.
-The "with" variant's embed step follows a placeholder channel id, which the step takes as it is, so the measurement needs no credential and registers nothing.
+The "with" variant's build step runs under `HOTCODEPUSH_OFFLINE=1`, so the measurement needs no credential and creates no binary; the build then names no channel, checks nothing and takes no updates.
 
 ## Where the bytes sit
 

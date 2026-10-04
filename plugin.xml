@@ -17,8 +17,8 @@
         <clobbers target="HotCodePush" />
     </js-module>
 
-    <!-- The embed step: writes the resource file the SDK reads into each prepared platform and registers the store build. -->
-    <hook type="after_prepare" src="scripts/embed.js" />
+    <!-- The build step: writes the resource file the SDK reads into each prepared platform and creates the store build, the binary. -->
+    <hook type="after_prepare" src="scripts/binary-create.js" />
 
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">

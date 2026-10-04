@@ -16,7 +16,7 @@ src/hotcodepush.ts     the module Cordova clobbers onto window.HotCodePush: one 
 src/definitions.ts     the types the package exports and the global it declares
 src/ios                the Cordova plugin, the bundle loader and the scheme-task responder over HotCodePushProtocol
 src/android            the Cordova plugin and the bundle loader over com.hotcodepush:protocol-android, and the Gradle reference
-scripts/embed.js       the after_prepare hook: npx hotcodepush bundle embed per prepared platform
+scripts/binary-create.js  the after_prepare hook: npx hotcodepush binary create per prepared platform
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 ```

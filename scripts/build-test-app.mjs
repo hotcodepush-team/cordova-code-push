@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // The check that the plugin compiles: a fresh Cordova app in a temporary directory, the platform at the version this
-// repository pins or the one named, the plugin added from this checkout, and a debug build; the embed step is the
+// repository pins or the one named, the plugin added from this checkout, and a debug build; the build step is the
 // CLI's and stays out.
 // Usage: node scripts/build-test-app.mjs android|ios [platform version]
 

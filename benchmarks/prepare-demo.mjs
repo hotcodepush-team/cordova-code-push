@@ -26,8 +26,6 @@ if (
 }
 
 const pluginName = '@hotcodepush/cordova-code-push';
-// The embed step resolves a channel's name through the API; an id is taken as it is, so the measurement needs no credential.
-const placeholderChannelId = '00000000-0000-4000-8000-000000000001';
 const excluded = new Set([
   'node_modules',
   'www',
@@ -106,10 +104,8 @@ console.log(`${variant}: ${target}`);
 function run(command, args) {
   execFileSync(command, args, {
     cwd: target,
-    env: {
-      HOTCODEPUSH_CHANNEL: placeholderChannelId,
-      ...process.env,
-    },
+    // The build step builds without the API: the measurement needs no credential and creates no binary.
+    env: { ...process.env, HOTCODEPUSH_OFFLINE: '1' },
     stdio: ['ignore', 'ignore', 'inherit'],
   });
 }
