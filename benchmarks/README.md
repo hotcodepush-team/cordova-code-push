@@ -18,7 +18,7 @@ The "with" variant's build step runs under `HOTCODEPUSH_OFFLINE=1`, so the measu
 
 ## Where the bytes sit
 
-On the current baseline the Android release APK grows by about 2.9 MB, nearly all of it in the dex files, about 7.3 MB larger before compression. About 2.3 MB of the growth is BouncyCastle, which the core verifies signatures with: Cordova's release build does not shrink code, so the whole library ships, while a project that turns R8 on keeps the classes the verification reaches, about 40 KB as measured on the core. The rest is the plugin's bridge and the shared core, OkHttp with Okio, and the parts of the Kotlin library and kotlinx-coroutines an app without Kotlin code of its own does not carry.
+On the current baseline the Android release APK grows by about 650 KB, nearly all of it in the dex files: the plugin's bridge and the shared core, OkHttp with Okio, and the parts of the Kotlin library and kotlinx-coroutines an app without Kotlin code of its own does not carry. The core verifies signatures with Android's own API, so no cryptography library is among them.
 The simulator app grows by about 3.6 MB, nearly all of it in the app's binary: the plugin and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle of about 5 KB, the plugin's JavaScript module and the resource file.
 
 ## Running it

@@ -10,14 +10,13 @@ When code and plan disagree, stop and surface it; never improvise.
 ## Layout
 
 ```
-plugin.xml             the plugin: the JavaScript module, the two hooks, the Android sources and Gradle reference, the iOS Swift package
+plugin.xml             the plugin: the JavaScript module, the after_prepare hook, the Android sources and Gradle reference, the iOS Swift package
 Package.swift          the iOS half as a Swift package named after the plugin's id, over Cordova and HotCodePushProtocol
 src/hotcodepush.ts     the module Cordova clobbers onto window.HotCodePush: one native call per method, the events, the readiness signal
 src/definitions.ts     the types the package exports and the global it declares
 src/ios                the Cordova plugin, the bundle loader and the scheme-task responder over HotCodePushProtocol
 src/android            the Cordova plugin and the bundle loader over com.hotcodepush:protocol-android, and the Gradle reference
 scripts/binary-create.js  the after_prepare hook: npx hotcodepush binary create per prepared platform
-scripts/ignore-bouncycastle-in-jetifier.js  the Android after_plugin_install hook: the core's BouncyCastle jar on Jetifier's ignore list
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 ```
