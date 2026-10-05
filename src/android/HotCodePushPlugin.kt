@@ -126,7 +126,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             "listen" -> listen(callbackContext)
             "notifyReady" -> run(callbackContext) { it.notifyReady().toJson() }
             "notifyRendered" -> runVoid(callbackContext) { it.handleRendered() }
-            "rollback" -> runVoid(callbackContext) { it.rollback(options.optStringOrNull("reason")) }
+            "rollbackUpdate" -> runVoid(callbackContext) { it.rollbackUpdate(options.optStringOrNull("reason")) }
             "setAttributes" -> setAttributes(options, callbackContext)
             "setChannel" -> runVoid(callbackContext) { it.setChannel(channelChoice(options)) }
             "setRestartAllowed" -> setRestartAllowed(options, callbackContext)

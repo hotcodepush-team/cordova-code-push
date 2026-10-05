@@ -116,9 +116,9 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         runVoid(command) { core in await core.handleRendered() }
     }
 
-    @objc(rollback:) func rollback(_ command: CDVInvokedUrlCommand) {
+    @objc(rollbackUpdate:) func rollbackUpdate(_ command: CDVInvokedUrlCommand) {
         let reason = HotCodePushPlugin.options(of: command)["reason"] as? String
-        runVoid(command) { core in try await core.rollback(detail: reason) }
+        runVoid(command) { core in try await core.rollbackUpdate(detail: reason) }
     }
 
     @objc(setAttributes:) func setAttributes(_ command: CDVInvokedUrlCommand) {

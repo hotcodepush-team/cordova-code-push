@@ -56,7 +56,7 @@ const hotCodePush: HotCodePushApi = {
     listenersByEventName.clear();
     return Promise.resolve();
   },
-  rollback: options => callNative('rollback', options),
+  rollbackUpdate: options => callNative('rollbackUpdate', options),
   setAttributes: options => callNative('setAttributes', options),
   setChannel: options => callNative('setChannel', options),
   setRestartAllowed: options => callNative('setRestartAllowed', options),
