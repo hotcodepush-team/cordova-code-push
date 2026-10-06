@@ -1,6 +1,6 @@
 import Cordova
 import Foundation
-import HotCodePushProtocol
+import HotCodePushCore
 import Network
 
 /// Cordova serves the app from `www` in the binary through its scheme handler; the plugin answers that handler first,
@@ -110,9 +110,9 @@ final class AppBundleEmbeddedBundle: EmbeddedBundle {
     private let pathsBySha256: [String: String]
     private let embeddedDirectory = Bundle.main.bundleURL.appendingPathComponent(CordovaBundleLoader.embeddedDirectoryName, isDirectory: true)
 
-    init(manifest: EmbeddedBundleManifest) {
+    init(manifest: EmbeddedBundleManifest?) {
         var paths: [String: String] = [:]
-        for file in manifest.files {
+        for file in manifest?.files ?? [] {
             paths[file.sha256] = file.path
         }
         pathsBySha256 = paths

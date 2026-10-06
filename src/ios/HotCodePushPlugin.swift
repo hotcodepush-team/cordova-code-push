@@ -1,6 +1,6 @@
 import Cordova
 import Foundation
-import HotCodePushProtocol
+import HotCodePushCore
 import UIKit
 import WebKit
 

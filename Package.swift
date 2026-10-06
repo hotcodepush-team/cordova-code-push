@@ -12,14 +12,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apache/cordova-ios.git", from: "8.0.0"),
-        .package(url: "https://github.com/hotcodepush-team/protocol-ios.git", revision: "d2d70f1fc4ecade23506af946caa514f2f287a72")
+        .package(url: "https://github.com/hotcodepush-team/core-ios.git", revision: "c9b5266d0780d5e56e4b86c847bc6d5ea5184536")
     ],
     targets: [
         .target(
             name: "HotCodePushCordova",
             dependencies: [
                 .product(name: "Cordova", package: "cordova-ios"),
-                .product(name: "HotCodePushProtocol", package: "protocol-ios")
+                .product(name: "HotCodePushCore", package: "core-ios")
             ],
             path: "src/ios")
     ]
