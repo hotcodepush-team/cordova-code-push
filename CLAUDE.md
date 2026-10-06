@@ -11,17 +11,17 @@ When code and plan disagree, stop and surface it; never improvise.
 
 ```
 plugin.xml             the plugin: the JavaScript module, the after_prepare hook, the Android sources and Gradle reference, the iOS Swift package
-Package.swift          the iOS half as a Swift package named after the plugin's id, over Cordova and HotCodePushProtocol
+Package.swift          the iOS half as a Swift package named after the plugin's id, over Cordova and HotCodePushCore
 src/hotcodepush.ts     the module Cordova clobbers onto window.HotCodePush: one native call per method, the events, the readiness signal
 src/definitions.ts     the types the package exports and the global it declares
-src/ios                the Cordova plugin, the bundle loader and the scheme-task responder over HotCodePushProtocol
-src/android            the Cordova plugin and the bundle loader over com.hotcodepush:protocol-android, and the Gradle reference
+src/ios                the Cordova plugin, the bundle loader and the scheme-task responder over HotCodePushCore
+src/android            the Cordova plugin and the bundle loader over com.hotcodepush:core-android, and the Gradle reference
 scripts/binary-create.js  the after_prepare hook: npx hotcodepush binary create per prepared platform
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 ```
 
-The native cores live in `protocol-ios` and `protocol-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module through JitPack by commit in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
+The native cores live in `core-ios` and `core-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module through JitPack by commit in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
 The plugin layer keeps the bundle loader, the readiness signal and the bridge, nothing of the protocol.
 
 ## Commands
