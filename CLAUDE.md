@@ -21,7 +21,7 @@ scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plug
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 ```
 
-The native cores live in `core-ios` and `core-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module through JitPack by commit in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
+The native cores live in `core-ios` and `core-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module from core-android's `maven` branch by full sha in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
 The plugin layer keeps the bundle loader, the readiness signal and the bridge, nothing of the protocol.
 
 ## Commands
