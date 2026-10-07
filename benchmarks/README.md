@@ -19,8 +19,8 @@ The "with" variant's build step runs under `HOTCODEPUSH_OFFLINE=1`, so the measu
 ## Where the bytes sit
 
 On the current baseline the Android release APK grows by about 830 KB.
-About 590 KB of it is `classes.dex`: the plugin's bridge and the shared core, and OkHttp with Okio; the app already carries the Kotlin library and kotlinx-coroutines, and the plugin adds fewer than thirty classes of each. The core verifies signatures with Android's own API, so no cryptography library is among them.
-About 180 KB of it is `libhotcodepush_bspatch.so`, the core's native library that applies a delta pack's patches, FreeBSD's bspatch and the decompression of bzip2 1.0.8, once for each of four ABIs, of which an app bundle delivers one: 133 KB of files, and the padding that aligns each to a 16 KB page, since the APK stores them uncompressed.
+About 596 KB of it is `classes.dex`: the plugin's bridge and the shared core, and OkHttp with Okio; the app already carries the Kotlin library and kotlinx-coroutines, and the plugin adds fewer than thirty classes of each. The core verifies signatures with Android's own API, so no cryptography library is among them.
+About 177 KB of it is `libhotcodepush_bspatch.so`, the core's native library that applies a delta pack's patches, FreeBSD's bspatch and the decompression of bzip2 1.0.8, once for each of four ABIs, of which an app bundle delivers one: 133 KB of files, and the padding that aligns each to a 16 KB page, since the APK stores them uncompressed.
 About 42 KB of it is the public-suffix list OkHttp brings.
 The simulator app grows by about 3.4 MB, nearly all of it in the app's binary: the plugin and the core are linked statically, and a simulator build is a two-slice fat binary, so a device build carries about half of that; the rest is the core's privacy-manifest bundle of about 5 KB, the plugin's JavaScript module and the resource file.
 
