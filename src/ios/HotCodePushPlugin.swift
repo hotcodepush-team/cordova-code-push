@@ -76,7 +76,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(checkForUpdate:) func checkForUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.checkForUpdate() }
+        run(command) { core in try await core.checkForUpdate() }
     }
 
     @objc(clearUpdates:) func clearUpdates(_ command: CDVInvokedUrlCommand) {
@@ -84,7 +84,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(downloadUpdate:) func downloadUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.downloadUpdate() }
+        run(command) { core in try await core.downloadUpdate() }
     }
 
     @objc(getChannel:) func getChannel(_ command: CDVInvokedUrlCommand) {
@@ -146,7 +146,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         } else {
             choice = nil
         }
-        runVoid(command) { core in await core.setChannel(choice) }
+        runVoid(command) { core in try await core.setChannel(choice) }
     }
 
     @objc(setRestartAllowed:) func setRestartAllowed(_ command: CDVInvokedUrlCommand) {
@@ -171,7 +171,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     @objc(sync:) func sync(_ command: CDVInvokedUrlCommand) {
         do {
             let options = try HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command))
-            run(command) { core in await core.sync(trigger: .manual, options: options) }
+            run(command) { core in try await core.sync(trigger: .manual, options: options) }
         } catch {
             reject(command, error.localizedDescription)
         }
