@@ -21,6 +21,52 @@ const RETAINED_EVENT_NAMES: ReadonlySet<HotCodePushEventName> = new Set([
 
 const SERVICE = 'HotCodePush';
 
+/**
+ * The options each method takes, checked before the call reaches the native side, so both platforms refuse any other
+ * shape alike: a programming mistake, which rejects with the plain error.
+ */
+const OPTIONS_SHAPES = {
+  rollbackUpdate: {
+    description: '{ reason?: string } or nothing',
+    matches: (options: unknown) =>
+      options === undefined || isRecordOfOptionalStrings(options, ['reason']),
+  },
+  setAttributes: {
+    description: 'an object of string or null values',
+    matches: (options: unknown) =>
+      isRecord(options) &&
+      Object.values(options).every(
+        value => value === null || typeof value === 'string',
+      ),
+  },
+  setChannel: {
+    description: '{ id: string }, { name: string } or null',
+    matches: (options: unknown) =>
+      options === null ||
+      (isRecord(options) &&
+        Object.keys(options).length === 1 &&
+        (typeof options.id === 'string' || typeof options.name === 'string')),
+  },
+  setRestartAllowed: {
+    description: '{ allowed: boolean }',
+    matches: (options: unknown) =>
+      isRecord(options) &&
+      Object.keys(options).length === 1 &&
+      typeof options.allowed === 'boolean',
+  },
+  sync: {
+    description:
+      '{ downloadStrategy?: string, installStrategy?: string, mandatoryInstallStrategy?: string } or nothing',
+    matches: (options: unknown) =>
+      options === undefined ||
+      isRecordOfOptionalStrings(options, [
+        'downloadStrategy',
+        'installStrategy',
+        'mandatoryInstallStrategy',
+      ]),
+  },
+};
+
 const listenersByEventName = new Map<HotCodePushEventName, Set<Listener>>();
 
 const retainedEventsByName = new Map<HotCodePushEventName, unknown>();
@@ -56,23 +102,54 @@ const hotCodePush: HotCodePushApi = {
     listenersByEventName.clear();
     return Promise.resolve();
   },
-  rollbackUpdate: options => callNative('rollbackUpdate', options),
-  setAttributes: options => callNative('setAttributes', options),
-  setChannel: options => callNative('setChannel', options),
-  setRestartAllowed: options => callNative('setRestartAllowed', options),
+  rollbackUpdate: options => callNativeWithOptions('rollbackUpdate', options),
+  setAttributes: options => callNativeWithOptions('setAttributes', options),
+  setChannel: options => callNativeWithOptions('setChannel', options),
+  setRestartAllowed: options =>
+    callNativeWithOptions('setRestartAllowed', options),
   showDebugScreen: () => callNative('showDebugScreen'),
-  sync: options => callNative('sync', options),
+  sync: options => callNativeWithOptions('sync', options),
 };
 
 function callNative<TResult>(
   action: string,
-  options: object | null = null,
+  options: unknown = null,
 ): Promise<TResult> {
   return new Promise((resolve, reject) => {
     exec(resolve, message => reject(new Error(message)), SERVICE, action, [
       options ?? {},
     ]);
   });
+}
+
+function callNativeWithOptions<TResult>(
+  action: keyof typeof OPTIONS_SHAPES,
+  options: unknown,
+): Promise<TResult> {
+  const shape = OPTIONS_SHAPES[action];
+  if (!shape.matches(options)) {
+    return Promise.reject(new Error(`${action} takes ${shape.description}`));
+  }
+  return callNative(action, options);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** An object of the named keys alone, each absent or a string. */
+function isRecordOfOptionalStrings(
+  value: unknown,
+  keys: readonly string[],
+): boolean {
+  return (
+    isRecord(value) &&
+    Object.entries(value).every(
+      ([key, entry]) =>
+        keys.includes(key) &&
+        (entry === undefined || typeof entry === 'string'),
+    )
+  );
 }
 
 function dispatchNativeEvent({ data, eventName }: NativeEvent): void {
