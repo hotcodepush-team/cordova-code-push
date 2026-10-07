@@ -18,13 +18,16 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     private var loader: CordovaBundleLoader?
     private var retainedEvent: [String: Any]?
 
+    /// Cordova calls it in `viewDidLoad` and loads the start page right after, so the start decides first which bundle that page comes from.
     override public func pluginInitialize() {
         guard let configuration = HotCodePushPlugin.readConfiguration() else {
             NSLog("[HotCodePush] %@", HotCodePushPlugin.notConfiguredMessage)
             return
         }
         let store = UserDefaultsStore()
-        let loader = CordovaBundleLoader(viewController: viewController, store: store)
+        let loader = CordovaBundleLoader(store: store, startPage: viewController?.startPage ?? "index.html") { [weak self] in
+            self?.reloadStartPage()
+        }
         let core = Core(
             configuration: configuration,
             device: HotCodePushPlugin.deviceFacts(),
@@ -38,12 +41,16 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         self.core = core
         NotificationCenter.default.addObserver(self, selector: #selector(handleDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
-        Task { await core.handleAppStart() }
+        loader.beginServing(bundleId: core.handleAppStartBlocking())
     }
 
     /// The page left: the callback the events went to belongs to the page that is gone.
     override public func onReset() {
         eventCallbackId = nil
+    }
+
+    private func reloadStartPage() {
+        viewController?.loadStartPage()
     }
 
     @objc private func handleDidEnterBackground() {

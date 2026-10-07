@@ -1,10 +1,10 @@
-import Cordova
 import Foundation
 import HotCodePushCore
 import Network
 
 /// Cordova serves the app from `www` in the binary through its scheme handler; the plugin answers that handler first,
 /// so a bundle laid out by path under the store is served in its place, on the same origin.
+/// Until the start has decided, nothing is served and nothing reloads: the bundle the core loads is only recorded.
 final class CordovaBundleLoader: BundleLoader {
     static let embeddedDirectoryName = "www"
 
@@ -20,20 +20,32 @@ final class CordovaBundleLoader: BundleLoader {
 
     private let lock = NSLock()
     private let monitor = NWPathMonitor()
+    private let reloadStartPage: () -> Void
+    private let startPage: String
     private let store: KeyValueStore
-    private weak var viewController: CDVViewController?
     private var isMetered = false
+    private var isServing = false
     private var runningBundleId: String?
 
     /// The store is the core's own, so the bundle to serve at the next start lies beside the state it belongs to.
-    init(viewController: CDVViewController?, store: KeyValueStore) {
-        self.viewController = viewController
+    /// `reloadStartPage` runs on the main thread.
+    init(store: KeyValueStore, startPage: String, reloadStartPage: @escaping () -> Void) {
         self.store = store
-        runningBundleId = persistedBundleId()
+        self.startPage = startPage
+        self.reloadStartPage = reloadStartPage
         monitor.pathUpdateHandler = { [weak self] path in
             self?.isMetered = path.isExpensive || path.isConstrained
         }
         monitor.start(queue: DispatchQueue.global(qos: .utility))
+    }
+
+    /// The start has decided: the page Cordova loads next is served from this bundle, `nil` for the embedded one,
+    /// and every bundle the core loads from now on reloads the page.
+    func beginServing(bundleId: String?) {
+        lock.lock()
+        defer { lock.unlock() }
+        runningBundleId = bundleId
+        isServing = true
     }
 
     func projectionDirectory(bundleId: String) -> URL {
@@ -48,18 +60,24 @@ final class CordovaBundleLoader: BundleLoader {
         store.set(bundleId, forKey: CordovaBundleLoader.persistedBundleKey)
     }
 
+    /// Before the start has decided, the bundle is persisted for the page about to load; once a page is served, it reloads.
     func loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId: bundleId)
+        lock.lock()
+        let isReloadNeeded = isServing
+        lock.unlock()
+        guard isReloadNeeded else { return }
         DispatchQueue.main.async { [weak self] in
             self?.setRunningBundleId(bundleId)
-            self?.viewController?.loadStartPage()
+            self?.reloadStartPage()
         }
     }
 
+    /// Before the start has decided, the bundle persisted to serve, which the start adopts when it is the one waiting.
     func servedBundleId() -> String? {
         lock.lock()
         defer { lock.unlock() }
-        return runningBundleId
+        return isServing ? runningBundleId : persistedBundleId()
     }
 
     func isConnectionMetered() -> Bool {
@@ -69,12 +87,12 @@ final class CordovaBundleLoader: BundleLoader {
     /// The file a request for the app's own path is answered with while a bundle runs; `nil` leaves the request to Cordova,
     /// which is every request under the embedded bundle and the framework's own files under any.
     func servedFile(forRequestPath path: String) -> ServedFile? {
-        guard let bundleId = servedBundleId(), !CordovaBundleLoader.isFrameworkPath(path) else {
+        guard let bundleId = readRunningBundleId(), !CordovaBundleLoader.isFrameworkPath(path) else {
             return nil
         }
         let directory = projectionDirectory(bundleId: bundleId).standardizedFileURL
         let isStartPageRequest = path.isEmpty || (path as NSString).pathExtension.isEmpty
-        let relativePath = isStartPageRequest ? (viewController?.startPage ?? "index.html") : path
+        let relativePath = isStartPageRequest ? startPage : path
         let fileURL = directory.appendingPathComponent(relativePath).standardizedFileURL
         // An encoded slash survives the web view's own normalization, so a path may still climb out of the bundle's directory.
         return fileURL.path.hasPrefix(directory.path + "/") ? .file(fileURL) : .missing
@@ -90,6 +108,13 @@ final class CordovaBundleLoader: BundleLoader {
             return nil
         }
         return bundleId
+    }
+
+    /// The bundle the page is served from, `nil` for the embedded one and before the start has decided.
+    private func readRunningBundleId() -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return runningBundleId
     }
 
     private func setRunningBundleId(_ bundleId: String?) {

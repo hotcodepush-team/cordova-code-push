@@ -9,13 +9,12 @@ import com.hotcodepush.core.EmbeddedBundle
 import com.hotcodepush.core.EmbeddedBundleManifest
 import com.hotcodepush.core.KeyValueStore
 import com.hotcodepush.core.PlainException
-import com.hotcodepush.core.WebViewGate
 import java.io.File
 
 /**
  * Cordova serves the app from `assets/www` through its asset loader, which asks the plugins first; the plugin answers
  * with the files of a bundle laid out by path under the store, so the bundle is served in the binary's place, on the same origin.
- * A switch waits for the first page, so the start is never interrupted halfway.
+ * Until the start has decided, nothing is served and nothing reloads: the bundle the core loads is only recorded.
  */
 class CordovaBundleLoader(
     private val context: Context,
@@ -23,11 +22,22 @@ class CordovaBundleLoader(
     private val store: KeyValueStore,
     private val reloadStartPage: () -> Unit,
 ) : BundleLoader {
-    private val gate = WebViewGate()
     private val projectionsDirectory = File(File(context.filesDir, "hotcodepush"), "www")
 
     @Volatile
-    private var runningBundleId: String? = persistedBundleId()
+    private var runningBundleId: String? = null
+
+    private var isServing = false
+
+    /**
+     * The start has decided: the page Cordova loads next is served from this bundle, `null` for the embedded one,
+     * and every bundle the core loads from now on reloads the page.
+     */
+    @Synchronized
+    fun beginServing(bundleId: String?) {
+        runningBundleId = bundleId
+        isServing = true
+    }
 
     override fun projectionDirectory(bundleId: String): File = File(projectionsDirectory, bundleId)
 
@@ -39,15 +49,19 @@ class CordovaBundleLoader(
         store.putString(SERVED_BUNDLE_KEY, bundleId)
     }
 
+    /** Before the start has decided, the bundle is persisted for the page about to load; once a page is served, it reloads. */
     override fun loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId)
-        gate.runWhenLoaded {
+        synchronized(this) {
+            if (!isServing) return
             runningBundleId = bundleId
-            reloadStartPage()
         }
+        reloadStartPage()
     }
 
-    override fun servedBundleId(): String? = runningBundleId
+    /** Before the start has decided, the bundle persisted to serve, which the start adopts when it is the one waiting. */
+    @Synchronized
+    override fun servedBundleId(): String? = if (isServing) runningBundleId else persistedBundleId()
 
     override fun isConnectionMetered(): Boolean =
         (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: false
@@ -67,11 +81,6 @@ class CordovaBundleLoader(
         }
         return WebResourceResponse(mimeType(file), null, file.inputStream())
     }
-
-    fun handleWebViewLoaded() = gate.markLoaded()
-
-    /** The activity is gone: a switch still waiting for its WebView has nowhere to go. */
-    fun close() = gate.close()
 
     /** What `cordova prepare` adds to the app's own files: the bridge of the binary's plugins, never a bundle's. */
     private fun isFrameworkPath(path: String) = path in FRAMEWORK_FILE_PATHS || path.startsWith(FRAMEWORK_PLUGINS_PREFIX)

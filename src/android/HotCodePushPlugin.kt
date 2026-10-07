@@ -53,6 +53,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private val scheduler = HandlerScheduler()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /** Cordova loads the start page right after the plugins initialize, so the start decides first which bundle that page comes from. */
     override fun pluginInitialize() {
         val context = cordova.context
         val configuration = readConfiguration(context)
@@ -61,7 +62,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             return
         }
         val store = SharedPreferencesStore(context.getSharedPreferences(defaultPreferencesName(context), Context.MODE_PRIVATE))
-        val loader = CordovaBundleLoader(context, store) { reloadStartPage() }
+        val loader = CordovaBundleLoader(context, store, ::reloadStartPage)
         val core = Core(
             configuration = configuration,
             device = deviceFacts(context),
@@ -78,16 +79,11 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         )
         this.core = core
         this.loader = loader
-        scope.launch { core.handleAppStart() }
+        loader.beginServing(core.handleAppStartBlocking())
     }
 
     /** A request for the running bundle's own files is answered from its directory; Cordova answers the rest from the binary. */
     override fun getPathHandler(): CordovaPluginPathHandler = pathHandler
-
-    override fun onMessage(id: String, data: Any?): Any? {
-        if (id == PAGE_FINISHED_MESSAGE) loader?.handleWebViewLoaded()
-        return null
-    }
 
     override fun onPause(multitasking: Boolean) {
         val core = core ?: return
@@ -103,7 +99,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     override fun onDestroy() {
         scope.cancel()
         scheduler.cancelAll()
-        loader?.close()
         core = null
         loader = null
     }
@@ -272,7 +267,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     companion object {
         const val SDK_VERSION = "0.0.0"
         private const val NOT_CONFIGURED_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
-        private const val PAGE_FINISHED_MESSAGE = "onPageFinished"
         private const val RETAINED_EVENT_NAME = "rolledBack"
         private const val TAG = "HotCodePush"
 
