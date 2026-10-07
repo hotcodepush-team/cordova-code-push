@@ -50,6 +50,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
     /** The page loads the SDK started whose start Cordova has not reported yet: the first page and every reload of the core. */
     private var expectedPageStartCount = 0
+    private var hasPaused = false
     private var loader: CordovaBundleLoader? = null
     private var retainedEvent: JSONObject? = null
     private val pathHandler = CordovaPluginPathHandler { path -> loader?.handleRequest(path) }
@@ -90,11 +91,14 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     override fun getPathHandler(): CordovaPluginPathHandler = pathHandler
 
     override fun onPause(multitasking: Boolean) {
+        hasPaused = true
         val core = core ?: return
         scope.launch { core.handleAppPause() }
     }
 
+    /** Cordova resumes every plugin at the activity's first resume too, which is the start, not a return from the background. */
     override fun onResume(multitasking: Boolean) {
+        if (!hasPaused) return
         val core = core ?: return
         scope.launch { core.handleAppResume() }
     }
