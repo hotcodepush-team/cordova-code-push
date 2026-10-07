@@ -49,7 +49,10 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         eventCallbackId = nil
     }
 
+    /// The SDK's own reload, on the main thread: the departing page loses its callback first, so an event the core sends
+    /// with the reload, a rollback's above all, is kept for the page that follows.
     private func reloadStartPage() {
+        eventCallbackId = nil
         viewController?.loadStartPage()
     }
 

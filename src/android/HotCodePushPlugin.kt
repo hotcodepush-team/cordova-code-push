@@ -231,7 +231,12 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         }
     }
 
+    /**
+     * The SDK's own reload: the departing page loses its callback first, so an event the core sends with the reload,
+     * a rollback's above all, is kept for the page that follows.
+     */
     private fun reloadStartPage() {
+        synchronized(this) { eventCallback = null }
         cordova.activity.runOnUiThread { webView.loadUrlIntoView(launchUrl(), false) }
     }
 
