@@ -76,7 +76,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         val configuration = try {
             Configuration.decode(resourceFile)
         } catch (exception: Exception) {
-            notConfiguredMessage = "HotCodePush is not configured: hotcodepush.json in the app's assets was refused: ${exception.message}"
+            notConfiguredMessage = "HotCodePush is not configured: the app's hotcodepush.json was refused: ${exception.message}. Check the project's hotcodepush.json and build the app again."
             LOG.e(TAG, notConfiguredMessage)
             return
         }

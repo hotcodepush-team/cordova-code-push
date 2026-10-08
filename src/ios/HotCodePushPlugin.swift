@@ -286,9 +286,9 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         case .dataCorrupted(let context)?, .keyNotFound(_, let context)?, .typeMismatch(_, let context)?, .valueNotFound(_, let context)?:
             reason = context.debugDescription
         default:
-            reason = error.localizedDescription
+            reason = String(describing: error)
         }
-        return "HotCodePush is not configured: hotcodepush.json in the app's resources was refused: \(reason)"
+        return "HotCodePush is not configured: the app's hotcodepush.json was refused: \(reason). Check the project's hotcodepush.json and build the app again."
     }
 
     private static func deviceFacts() -> DeviceFacts {
