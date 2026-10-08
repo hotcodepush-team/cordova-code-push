@@ -42,6 +42,7 @@ import org.apache.cordova.PluginResult
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.IOException
 
 /** The Cordova bridge over the shared core: every action is one call into the core, every answer one JSON object. */
 class HotCodePushPlugin : CordovaPlugin(), CoreListener {
@@ -52,6 +53,9 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private var expectedPageStartCount = 0
     private var hasPaused = false
     private var loader: CordovaBundleLoader? = null
+
+    /** What every call rejects with while there is no core: the resource file is missing, or the core's reader refused it. */
+    private var notConfiguredMessage = MISSING_RESOURCE_FILE_MESSAGE
     private var retainedEvent: JSONObject? = null
     private val pathHandler = CordovaPluginPathHandler { path -> loader?.handleRequest(path) }
     private val scheduler = HandlerScheduler()
@@ -64,9 +68,16 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             return
         }
         val context = cordova.context
-        val configuration = readConfiguration(context)
-        if (configuration == null) {
-            LOG.e(TAG, NOT_CONFIGURED_MESSAGE)
+        val resourceFile = readResourceFile(context)
+        if (resourceFile == null) {
+            LOG.e(TAG, notConfiguredMessage)
+            return
+        }
+        val configuration = try {
+            Configuration.decode(resourceFile)
+        } catch (exception: Exception) {
+            notConfiguredMessage = "HotCodePush is not configured: hotcodepush.json in the app's assets was refused: ${exception.message}"
+            LOG.e(TAG, notConfiguredMessage)
             return
         }
         val store = SharedPreferencesStore(context.getSharedPreferences(defaultPreferencesName(context), Context.MODE_PRIVATE))
@@ -266,7 +277,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     /** Cordova loads the app from `file://` then, where its asset loader, and with it the plugin, never answers a request. */
     private fun isInsecureFileModeEnabled(): Boolean = preferences.getBoolean(INSECURE_FILE_MODE_PREFERENCE, false)
 
-    private fun resolveNotConfiguredMessage(): String = if (isInsecureFileModeEnabled()) INSECURE_FILE_MODE_MESSAGE else NOT_CONFIGURED_MESSAGE
+    private fun resolveNotConfiguredMessage(): String = if (isInsecureFileModeEnabled()) INSECURE_FILE_MODE_MESSAGE else notConfiguredMessage
 
     /** The page Cordova starts the app on, from `config.xml`'s content source under the app's scheme and hostname. */
     private fun launchUrl(): String = ConfigXmlParser().apply { parse(cordova.context) }.launchUrl
@@ -301,16 +312,16 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         const val SDK_VERSION = "0.0.0"
         private const val INSECURE_FILE_MODE_PREFERENCE = "AndroidInsecureFileModeEnabled"
         private const val INSECURE_FILE_MODE_MESSAGE = "HotCodePush is off: the $INSECURE_FILE_MODE_PREFERENCE preference loads the app from file://, where no update can be served. Remove the preference from config.xml to take updates."
-        private const val NOT_CONFIGURED_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
+        private const val MISSING_RESOURCE_FILE_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
         private const val RETAINED_EVENT_NAME = "rolledBack"
         private const val TAG = "HotCodePush"
 
         /** The default `SharedPreferences`, the file `PreferenceManager.getDefaultSharedPreferences` names, without the dependency. */
         private fun defaultPreferencesName(context: Context) = "${context.packageName}_preferences"
 
-        private fun readConfiguration(context: Context): Configuration? = try {
-            context.assets.open("${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json").bufferedReader().use { Configuration.decode(it.readText()) }
-        } catch (exception: Exception) {
+        private fun readResourceFile(context: Context): String? = try {
+            context.assets.open("${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json").bufferedReader().use { it.readText() }
+        } catch (exception: IOException) {
             null
         }
 

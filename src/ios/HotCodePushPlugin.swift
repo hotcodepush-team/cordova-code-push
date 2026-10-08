@@ -9,7 +9,7 @@ import WebKit
 public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     public static let sdkVersion = "0.0.0"
 
-    private static let notConfiguredMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
+    private static let missingResourceFileMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
     private static let retainedEventName = "rolledBack"
 
     private let responder = ServedFileResponder()
@@ -18,12 +18,22 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     /// The page loads the SDK started whose start Cordova has not reported yet, on the main thread: the first page and every reload of the core.
     private var expectedPageStartCount = 0
     private var loader: CordovaBundleLoader?
+    /// What every call rejects with while there is no core: the resource file is missing, or the core's reader refused it.
+    private var notConfiguredMessage = HotCodePushPlugin.missingResourceFileMessage
     private var retainedEvent: [String: Any]?
 
     /// Cordova calls it in `viewDidLoad` and loads the start page right after, so the start decides first which bundle that page comes from.
     override public func pluginInitialize() {
-        guard let configuration = HotCodePushPlugin.readConfiguration() else {
-            NSLog("[HotCodePush] %@", HotCodePushPlugin.notConfiguredMessage)
+        guard let resourceFile = HotCodePushPlugin.readResourceFile() else {
+            NSLog("[HotCodePush] %@", notConfiguredMessage)
+            return
+        }
+        let configuration: Configuration
+        do {
+            configuration = try Configuration.decode(resourceFile)
+        } catch {
+            notConfiguredMessage = HotCodePushPlugin.resolveRefusedMessage(error)
+            NSLog("[HotCodePush] %@", notConfiguredMessage)
             return
         }
         let store = UserDefaultsStore()
@@ -179,7 +189,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     @objc(showDebugScreen:) func showDebugScreen(_ command: CDVInvokedUrlCommand) {
         guard let core = core, let viewController = viewController else {
-            reject(command, HotCodePushPlugin.notConfiguredMessage)
+            reject(command, notConfiguredMessage)
             return
         }
         DispatchQueue.main.async {
@@ -220,7 +230,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     private func run<T: Encodable>(_ command: CDVInvokedUrlCommand, _ body: @escaping (Core) async throws -> T) {
         guard let core = core else {
-            reject(command, HotCodePushPlugin.notConfiguredMessage)
+            reject(command, notConfiguredMessage)
             return
         }
         Task {
@@ -235,7 +245,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     private func runVoid(_ command: CDVInvokedUrlCommand, _ body: @escaping (Core) async throws -> Void) {
         guard let core = core else {
-            reject(command, HotCodePushPlugin.notConfiguredMessage)
+            reject(command, notConfiguredMessage)
             return
         }
         Task {
@@ -262,16 +272,23 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     // MARK: The platform's facts
 
-    private static func readConfiguration() -> Configuration? {
-        guard let url = Bundle.main.url(forResource: "hotcodepush", withExtension: "json", subdirectory: CordovaBundleLoader.embeddedDirectoryName), let data = try? Data(contentsOf: url) else {
+    private static func readResourceFile() -> Data? {
+        guard let url = Bundle.main.url(forResource: "hotcodepush", withExtension: "json", subdirectory: CordovaBundleLoader.embeddedDirectoryName) else {
             return nil
         }
-        do {
-            return try Configuration.decode(data)
-        } catch {
-            NSLog("[HotCodePush] hotcodepush.json could not be read: %@", String(describing: error))
-            return nil
+        return try? Data(contentsOf: url)
+    }
+
+    /// A resource file the core's reader threw on, in the reader's words: a decoding error says which field broke which rule.
+    private static func resolveRefusedMessage(_ error: Error) -> String {
+        let reason: String
+        switch error as? DecodingError {
+        case .dataCorrupted(let context)?, .keyNotFound(_, let context)?, .typeMismatch(_, let context)?, .valueNotFound(_, let context)?:
+            reason = context.debugDescription
+        default:
+            reason = error.localizedDescription
         }
+        return "HotCodePush is not configured: hotcodepush.json in the app's resources was refused: \(reason)"
     }
 
     private static func deviceFacts() -> DeviceFacts {
