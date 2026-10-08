@@ -10,7 +10,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     public static let sdkVersion = "0.0.0"
 
     private static let missingResourceFileMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
-    private static let retainedEventName = "rolledBack"
+    private static let retainedEventName = "updateRolledBack"
 
     private let responder = ServedFileResponder()
     private var core: Core?
@@ -217,9 +217,9 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     /// Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call.
     private static func syncOptions(from options: [String: Any]) throws -> SyncOptions {
         return SyncOptions(
+            applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
             downloadStrategy: try option("downloadStrategy", options, DownloadStrategy.init(rawValue:)),
-            installStrategy: try option("installStrategy", options, InstallStrategy.init(rawValue:)),
-            mandatoryInstallStrategy: try option("mandatoryInstallStrategy", options, MandatoryInstallStrategy.init(rawValue:)))
+            mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 
     private static func option<T>(_ name: String, _ options: [String: Any], _ parse: (String) -> T?) throws -> T? {
@@ -326,7 +326,7 @@ extension HotCodePushPlugin: CoreListener {
         send(event: ["eventName": "downloadProgress", "data": ["releaseId": releaseId, "downloadedBytes": downloadedBytes, "totalBytes": totalBytes, "progress": progress]])
     }
 
-    public func rolledBack(_ event: RolledBackEvent) {
+    public func updateRolledBack(_ event: UpdateRolledBackEvent) {
         notify(HotCodePushPlugin.retainedEventName, event)
     }
 

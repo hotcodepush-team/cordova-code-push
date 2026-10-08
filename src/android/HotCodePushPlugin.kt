@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import com.hotcodepush.core.ApplyStrategy
 import com.hotcodepush.core.ChannelChoice
 import com.hotcodepush.core.Clock
 import com.hotcodepush.core.Configuration
@@ -15,12 +16,10 @@ import com.hotcodepush.core.DebugScreen
 import com.hotcodepush.core.DeviceFacts
 import com.hotcodepush.core.DownloadStrategy
 import com.hotcodepush.core.FileStore
-import com.hotcodepush.core.InstallStrategy
 import com.hotcodepush.core.KeyValueStore
-import com.hotcodepush.core.MandatoryInstallStrategy
+import com.hotcodepush.core.MandatoryApplyStrategy
 import com.hotcodepush.core.OkHttpClientAdapter
 import com.hotcodepush.core.PlainException
-import com.hotcodepush.core.RolledBackEvent
 import com.hotcodepush.core.ScheduledTask
 import com.hotcodepush.core.Scheduler
 import com.hotcodepush.core.SyncOptions
@@ -28,6 +27,7 @@ import com.hotcodepush.core.SyncTrigger
 import com.hotcodepush.core.UpdateAvailableEvent
 import com.hotcodepush.core.UpdateDownloadedEvent
 import com.hotcodepush.core.UpdateFailedEvent
+import com.hotcodepush.core.UpdateRolledBackEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -221,9 +221,9 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
     /** Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call. */
     private fun syncOptions(options: JSONObject) = SyncOptions(
+        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),
-        installStrategy = option("installStrategy", options, InstallStrategy::fromWire),
-        mandatoryInstallStrategy = option("mandatoryInstallStrategy", options, MandatoryInstallStrategy::fromWire),
+        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
     )
 
     private fun <T> option(name: String, options: JSONObject, parse: (String?) -> T?): T? {
@@ -295,7 +295,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         notify("downloadProgress", JSONObject().put("releaseId", releaseId).put("downloadedBytes", downloadedBytes).put("totalBytes", totalBytes).put("progress", progress))
     }
 
-    override fun rolledBack(event: RolledBackEvent) = notify(RETAINED_EVENT_NAME, event.toJson())
+    override fun updateRolledBack(event: UpdateRolledBackEvent) = notify(RETAINED_EVENT_NAME, event.toJson())
 
     private fun notify(eventName: String, data: JSONObject) = send(JSONObject().put("eventName", eventName).put("data", data))
 
@@ -313,7 +313,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         private const val INSECURE_FILE_MODE_PREFERENCE = "AndroidInsecureFileModeEnabled"
         private const val INSECURE_FILE_MODE_MESSAGE = "HotCodePush is off: the $INSECURE_FILE_MODE_PREFERENCE preference loads the app from file://, where no update can be served. Remove the preference from config.xml to take updates."
         private const val MISSING_RESOURCE_FILE_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
-        private const val RETAINED_EVENT_NAME = "rolledBack"
+        private const val RETAINED_EVENT_NAME = "updateRolledBack"
         private const val TAG = "HotCodePush"
 
         /** The default `SharedPreferences`, the file `PreferenceManager.getDefaultSharedPreferences` names, without the dependency. */

@@ -16,7 +16,7 @@ interface NativeEvent {
  * before the reloaded app has added its listener.
  */
 const RETAINED_EVENT_NAMES: ReadonlySet<HotCodePushEventName> = new Set([
-  'rolledBack',
+  'updateRolledBack',
 ]);
 
 const SERVICE = 'HotCodePush';
@@ -56,13 +56,13 @@ const OPTIONS_SHAPES = {
   },
   sync: {
     description:
-      '{ downloadStrategy?: string, installStrategy?: string, mandatoryInstallStrategy?: string } or nothing',
+      '{ applyStrategy?: string, downloadStrategy?: string, mandatoryApplyStrategy?: string } or nothing',
     matches: (options: unknown) =>
       options === undefined ||
       isRecordOfOptionalStrings(options, [
+        'applyStrategy',
         'downloadStrategy',
-        'installStrategy',
-        'mandatoryInstallStrategy',
+        'mandatoryApplyStrategy',
       ]),
   },
 };
