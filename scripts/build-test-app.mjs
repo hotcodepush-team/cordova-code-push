@@ -42,7 +42,7 @@ const appDirectory = join(
 const CLI_STAND_IN = `#!/usr/bin/env node
 const { mkdirSync, writeFileSync } = require('node:fs');
 const { dirname } = require('node:path');
-const resourceFilePath = process.argv[process.argv.indexOf('--out') + 1];
+const resourceFilePath = process.argv[process.argv.indexOf('--resource-file-path') + 1];
 mkdirSync(dirname(resourceFilePath), { recursive: true });
 writeFileSync(resourceFilePath, '{}');
 `;

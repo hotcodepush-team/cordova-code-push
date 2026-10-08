@@ -69,22 +69,45 @@ describe(
       rmSync(projectRoot, { force: true, recursive: true });
     });
 
-    it("should pass the platform's www, the version and build of the processed Info.plist and the app's www for the resource file", () => {
+    it('should create the binary under the version and build of the processed Info.plist when the build is an archive', () => {
       assert.deepEqual(
-        runScript({ PATH: `${nodeDirectoryPath}:/usr/bin:/bin` }),
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'YES',
+          PATH: `${nodeDirectoryPath}:/usr/bin:/bin`,
+        }),
         [
           'hotcodepush',
           'binary',
           'create',
-          '--platform',
-          'ios',
-          '--path',
-          join(sourceRoot, 'www'),
           '--binary-version',
           '2.4.1',
           '--binary-build',
           '57',
-          '--out',
+          '--platform',
+          'ios',
+          '--embedded-bundle-path',
+          join(sourceRoot, 'www'),
+          '--resource-file-path',
+          join(appPath, 'www', 'hotcodepush.json'),
+        ],
+      );
+    });
+
+    it('should write the resource file alone when the build is not an archive', () => {
+      assert.deepEqual(
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'NO',
+          PATH: `${nodeDirectoryPath}:/usr/bin:/bin`,
+        }),
+        [
+          'hotcodepush',
+          'resource-file',
+          'write',
+          '--platform',
+          'ios',
+          '--embedded-bundle-path',
+          join(sourceRoot, 'www'),
+          '--resource-file-path',
           join(appPath, 'www', 'hotcodepush.json'),
         ],
       );
@@ -96,7 +119,13 @@ describe(
         `export NODE_BINARY=${join(nodeDirectoryPath, 'node')}\n`,
       );
 
-      assert.equal(runScript({ PATH: '/usr/bin:/bin' })[0], 'hotcodepush');
+      assert.equal(
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'NO',
+          PATH: '/usr/bin:/bin',
+        })[0],
+        'hotcodepush',
+      );
     });
 
     it('should run the Node nvm selects when neither the PATH nor .xcode.env has one', () => {
@@ -106,12 +135,18 @@ describe(
         `nvm() { PATH="${nodeDirectoryPath}:$PATH"; }\n`,
       );
 
-      assert.equal(runScript({ PATH: '/usr/bin:/bin' })[0], 'hotcodepush');
+      assert.equal(
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'NO',
+          PATH: '/usr/bin:/bin',
+        })[0],
+        'hotcodepush',
+      );
     });
 
     /**
      * Runs the script with the build settings Xcode gives a phase of the app target and returns the arguments it ran
-     * binary create with.
+     * the CLI with.
      */
     function runScript(buildSettings) {
       execFileSync('/bin/sh', [SCRIPT_PATH], {

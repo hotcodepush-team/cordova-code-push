@@ -1,6 +1,6 @@
 // The plugin's part of the app's build.gradle, which Cordova applies from plugin.xml: the core, and the build step. For
-// every variant, the task below runs the CLI's `binary create` over the platform's www, which Cordova's prepare copied,
-// and writes hotcodepush.json into the variant's www assets.
+// every variant, the task below runs the CLI over the platform's www, which Cordova's prepare copied, writes
+// hotcodepush.json into the variant's www assets and, for a store build (a build type other than debug), creates the binary.
 
 import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -23,6 +23,9 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     @Input
     abstract Property<String> getBinaryVersion()
 
+    @Input
+    abstract Property<Boolean> getIsStoreBuild()
+
     @OutputDirectory
     abstract DirectoryProperty getOutputDirectory()
 
@@ -38,15 +41,15 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
     @TaskAction
     void createBinary() {
         def npx = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c', 'npx'] : ['npx']
+        def command = isStoreBuild.get()
+            ? ['binary', 'create', '--binary-version', binaryVersion.get(), '--binary-build', binaryBuild.get()]
+            : ['resource-file', 'write']
         execOperations.exec {
             it.workingDir = projectRoot.get().asFile
-            it.commandLine(npx + [
-                'hotcodepush', 'binary', 'create',
+            it.commandLine(npx + ['hotcodepush'] + command + [
                 '--platform', 'android',
-                '--path', wwwDirectory.get().asFile.path,
-                '--binary-version', binaryVersion.get(),
-                '--binary-build', binaryBuild.get(),
-                '--out', outputDirectory.file('www/hotcodepush.json').get().asFile.path,
+                '--embedded-bundle-path', wwwDirectory.get().asFile.path,
+                '--resource-file-path', outputDirectory.file('www/hotcodepush.json').get().asFile.path,
             ])
         }
     }
@@ -55,13 +58,15 @@ abstract class HotCodePushBinaryCreateTask extends DefaultTask {
 androidComponents.onVariants(androidComponents.selector().all()) { variant ->
     def binaryCreateTask = tasks.register("createHotCodePushBinary${variant.name.capitalize()}", HotCodePushBinaryCreateTask) {
         it.group = 'hotcodepush'
-        it.description = "Writes hotcodepush.json into the ${variant.name} assets."
+        it.description = "Writes hotcodepush.json into the ${variant.name} assets and creates the binary of a store build."
         it.binaryBuild.set(variant.outputs[0].versionCode.map { String.valueOf(it) })
         it.binaryVersion.set(variant.outputs[0].versionName)
+        it.isStoreBuild.set(variant.buildType != 'debug')
         // The Cordova project, two levels above the platform's Gradle project.
         it.projectRoot.set(rootProject.layout.projectDirectory.dir('../..'))
         it.wwwDirectory.set(layout.projectDirectory.dir('src/main/assets/www'))
-        // The resource file carries the build's time as the floor: the step never counts as up to date.
+        // The resource file carries the build's time as the floor and a store build creates its binary on every run: the
+        // step never counts as up to date.
         it.outputs.upToDateWhen { false }
     }
     variant.sources.assets.addGeneratedSourceDirectory(binaryCreateTask) { it.outputDirectory }

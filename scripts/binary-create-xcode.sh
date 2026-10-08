@@ -1,17 +1,24 @@
 #!/bin/sh
 # The build step of the Xcode build, run by the "Create HotCodePush binary" phase the plugin's hook adds to the app
-# target: the CLI's `binary create` hashes the platform's www, which Cordova's prepare copied, and writes hotcodepush.json
-# into the app's www. The phase holds one line; what it runs lives here.
+# target: the CLI hashes the platform's www, which Cordova's prepare copied, writes hotcodepush.json into the app's www
+# and, in a store build, creates the binary. The phase holds one line; what it runs lives here.
 set -e
 
 PROJECT_ROOT="$SRCROOT/../.."
 # The built app's www, where the target builds its product: an archive installs it apart from the configuration's directory.
 DEST="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/www"
 
-# The identity the device reports, from the built app's processed Info.plist, where Cordova's version and build arrive.
-INFO_PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
-BINARY_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST")
-BINARY_BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST")
+# The store build is an archive, which Xcode marks with DEPLOYMENT_POSTPROCESSING, the setting behind "Run script only
+# when installing": it creates the binary under the version and build the device reports, from the built app's processed
+# Info.plist, where Cordova's version and build arrive. A Run or a plain build writes the resource file alone.
+if [ "$DEPLOYMENT_POSTPROCESSING" = "YES" ]; then
+  INFO_PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+  BINARY_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST")
+  BINARY_BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST")
+  set -- binary create --binary-version "$BINARY_VERSION" --binary-build "$BINARY_BUILD"
+else
+  set -- resource-file write
+fi
 
 has_node() {
   command -v node > /dev/null 2>&1
@@ -57,9 +64,7 @@ if ! has_node; then
   exit 1
 fi
 
-npx hotcodepush binary create \
+npx hotcodepush "$@" \
   --platform ios \
-  --path "$SRCROOT/www" \
-  --binary-version "$BINARY_VERSION" \
-  --binary-build "$BINARY_BUILD" \
-  --out "$DEST/hotcodepush.json"
+  --embedded-bundle-path "$SRCROOT/www" \
+  --resource-file-path "$DEST/hotcodepush.json"

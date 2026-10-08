@@ -24,7 +24,7 @@ const PHASE_SCRIPT = [
 
 /**
  * The build step on iOS, run by Cordova after the platform is added and after every prepare: Cordova has no
- * `plugin.xml` element for a build phase, so the hook adds the phase that runs `binary create` to the generated Xcode project.
+ * `plugin.xml` element for a build phase, so the hook adds the phase that runs the CLI to the generated Xcode project.
  */
 module.exports = function addBinaryCreatePhaseToPlatform(context) {
   addBinaryCreatePhase(
@@ -58,7 +58,7 @@ function addBinaryCreatePhase(projectFilePath) {
       shellScript: PHASE_SCRIPT,
     },
   );
-  // binary create writes hotcodepush.json, which carries the build's time, on every build; a phase without outputs
+  // the CLI writes hotcodepush.json, which carries the build's time, on every build; a phase without outputs
   // that is not marked so makes Xcode warn
   buildPhase.alwaysOutOfDate = 1;
   writeFileSync(projectFilePath, project.writeSync());
