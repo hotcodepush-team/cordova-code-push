@@ -26,6 +26,16 @@ const SERVICE = 'HotCodePush';
  * shape alike: a programming mistake, which rejects with the plain error.
  */
 const OPTIONS_SHAPES = {
+  downloadUpdate: {
+    description:
+      '{ applyStrategy?: string, mandatoryApplyStrategy?: string } or nothing',
+    matches: (options: unknown) =>
+      options === undefined ||
+      isRecordOfOptionalStrings(options, [
+        'applyStrategy',
+        'mandatoryApplyStrategy',
+      ]),
+  },
   rollbackUpdate: {
     description: '{ reason?: string } or nothing',
     matches: (options: unknown) =>
@@ -93,7 +103,7 @@ const hotCodePush: HotCodePushApi = {
   applyUpdate: () => callNative('applyUpdate'),
   checkForUpdate: () => callNative('checkForUpdate'),
   clearUpdates: () => callNative('clearUpdates'),
-  downloadUpdate: () => callNative('downloadUpdate'),
+  downloadUpdate: options => callNativeWithOptions('downloadUpdate', options),
   getChannel: () => callNative('getChannel'),
   getDevice: () => callNative('getDevice'),
   getState: () => callNative('getState'),

@@ -114,7 +114,12 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(downloadUpdate:) func downloadUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try await core.downloadUpdate() }
+        do {
+            let options = try HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command))
+            run(command) { core in try await core.downloadUpdate(options: options) }
+        } catch {
+            reject(command, error.localizedDescription)
+        }
     }
 
     @objc(getChannel:) func getChannel(_ command: CDVInvokedUrlCommand) {
@@ -219,6 +224,13 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         return SyncOptions(
             applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
             downloadStrategy: try option("downloadStrategy", options, DownloadStrategy.init(rawValue:)),
+            mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
+    }
+
+    /// The apply strategies for this call; the download strategy is pinned to `auto`.
+    private static func downloadUpdateOptions(from options: [String: Any]) throws -> DownloadUpdateOptions {
+        return DownloadUpdateOptions(
+            applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
             mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 

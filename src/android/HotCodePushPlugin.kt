@@ -15,6 +15,7 @@ import com.hotcodepush.core.CoreListener
 import com.hotcodepush.core.DebugScreen
 import com.hotcodepush.core.DeviceFacts
 import com.hotcodepush.core.DownloadStrategy
+import com.hotcodepush.core.DownloadUpdateOptions
 import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.KeyValueStore
 import com.hotcodepush.core.MandatoryApplyStrategy
@@ -145,7 +146,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             "applyUpdate" -> run(callbackContext) { it.applyUpdate().toJson() }
             "checkForUpdate" -> run(callbackContext) { it.checkForUpdate().toJson() }
             "clearUpdates" -> runVoid(callbackContext) { it.clearUpdates() }
-            "downloadUpdate" -> run(callbackContext) { it.downloadUpdate().toJson() }
+            "downloadUpdate" -> downloadUpdate(options, callbackContext)
             "getChannel" -> run(callbackContext) { it.channel().toJson() }
             "getDevice" -> run(callbackContext) { it.deviceResult().toJson() }
             "getState" -> run(callbackContext) { it.getState().toJson() }
@@ -161,6 +162,16 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             else -> return false
         }
         return true
+    }
+
+    private fun downloadUpdate(options: JSONObject, callbackContext: CallbackContext) {
+        val downloadUpdateOptions = try {
+            downloadUpdateOptions(options)
+        } catch (exception: PlainException) {
+            callbackContext.error(exception.message)
+            return
+        }
+        run(callbackContext) { it.downloadUpdate(downloadUpdateOptions).toJson() }
     }
 
     /** The one callback the web layer registers for the life of the page; every event is answered on it. */
@@ -223,6 +234,12 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private fun syncOptions(options: JSONObject) = SyncOptions(
         applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),
+        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
+    )
+
+    /** The apply strategies for this call; the download strategy is pinned to `auto`. */
+    private fun downloadUpdateOptions(options: JSONObject) = DownloadUpdateOptions(
+        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
         mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
     )
 
