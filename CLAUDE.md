@@ -10,13 +10,15 @@ When code and plan disagree, stop and surface it; never improvise.
 ## Layout
 
 ```
-plugin.xml             the plugin: the JavaScript module, the after_prepare hook, the Android sources and Gradle reference, the iOS Swift package
+plugin.xml             the plugin: the JavaScript module, the iOS hook that adds the build phase, the Android sources and Gradle reference, the iOS Swift package
 Package.swift          the iOS half as a Swift package named after the plugin's id, over Cordova and HotCodePushCore
 src/hotcodepush.ts     the module Cordova clobbers onto window.HotCodePush: one native call per method, the events, the readiness signal
 src/definitions.ts     the types the package exports and the global it declares
 src/ios                the Cordova plugin, the bundle loader and the scheme-task responder over HotCodePushCore
-src/android            the Cordova plugin and the bundle loader over com.hotcodepush:core-android, and the Gradle reference
-scripts/binary-create.js  the after_prepare hook: npx hotcodepush binary create per prepared platform
+src/android            the Cordova plugin and the bundle loader over com.hotcodepush:core-android, and the Gradle reference with the build step's task per variant
+scripts/add-binary-create-phase.js  the iOS hook: adds the build phase to the generated Xcode project, once, at platform add and every prepare
+scripts/binary-create-xcode.sh      what the phase runs, with the Node lookup; `binary create` in an archive, `resource-file write` otherwise
+scripts/*.test.mjs                  their tests on node --test
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 ```
@@ -26,11 +28,12 @@ The plugin layer keeps the bundle loader, the readiness signal and the bridge, n
 
 ## Commands
 
-| Command                                | Does                                                    |
-| -------------------------------------- | ------------------------------------------------------- |
-| `npm run lint`                         | ESLint, Prettier and SwiftLint                          |
-| `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names   |
-| `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform |
+| Command                                | Does                                                     |
+| -------------------------------------- | -------------------------------------------------------- |
+| `npm run lint`                         | ESLint, Prettier and SwiftLint                           |
+| `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names    |
+| `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform  |
+| `npm test`                             | the hook and the script; the script's tests run on macOS |
 
 Run `npm run fmt` before every commit.
 The package is CommonJS on purpose: Cordova `require`s a plugin's hook script, so the tooling's own modules are `.mjs`.
@@ -51,7 +54,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - A bundle is served on the app's own origin: the plugin answers Cordova's scheme handler on iOS and its asset loader on Android before Cordova does, from the bundle's directory under the store; no start page is swapped and no storage moves.
 - `cordova.js`, `cordova_plugins.js` and `plugins/` are the binary's under every bundle: a request for them is never answered from a bundle's directory.
 - The Swift package carries no resources: a package named after the scoped plugin id would lay its resource bundle under `@hotcodepush/` inside the app, so the plugin calls no required-reason API of its own, keeps the served bundle's key in the core's store, and leaves the privacy manifest to the core.
-- The resource file is `www/hotcodepush.json` in each platform, written after Cordova copied the web assets; the embedded bundle is the binary's `www`, addressed by the embedded manifest's hashes.
+- The resource file is `www/hotcodepush.json`, written by the Xcode phase into the built app's `www` and by the Gradle task into the variant's generated `www` assets; the embedded bundle is the platform's `www`, addressed by the embedded manifest's hashes, without the native glue the loader serves from the binary.
 - The plugin's `plugin.xml` sets `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion`, so an app adds the plugin and edits nothing; the app's own preference wins.
 
 ## Agent workspace

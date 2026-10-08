@@ -12,7 +12,7 @@ cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcod
 
 A consumer pins a commit and bumps it deliberately; the preview comment on each commit names its `<sha>`. `npx hotcodepush init` runs the command for you and writes `hotcodepush.json`.
 
-The plugin needs `cordova-ios` 8 and `cordova-android` 14 or 15, and it wires itself: its `after_prepare` hook runs `npx hotcodepush binary create` on every `cordova prepare` and `cordova build`, which writes the resource file the SDK reads into each platform's `www` and creates the store build, the binary. Without a token on your machine, or with `HOTCODEPUSH_OFFLINE=1` for a build that is never shipped, the file names no channel and the build takes no updates; a pipeline without a token fails instead.
+The plugin needs `cordova-ios` 8 and `cordova-android` 14 or 15, and it wires itself into the native builds: a Gradle task per variant on Android, and on iOS a build phase "Create HotCodePush binary" its hook adds to the Xcode project at `cordova platform add` and every `cordova prepare`. Every build writes `www/hotcodepush.json`, the resource file the SDK reads, into the built app; only an Xcode archive or a non-debug variant also creates the store build's binary, which needs a login or `HOTCODEPUSH_TOKEN`. Without a token on your machine, or with `HOTCODEPUSH_OFFLINE=1` for a build that is never shipped, the file names no channel and the build takes no updates; a pipeline's store build without a token fails instead. The Xcode phase finds Node through `platforms/ios/.xcode.env` (`export NODE_BINARY=…`, `.xcode.env.local` over it), else nvm, fnm, Volta, asdf or Homebrew.
 
 The native cores are the Swift package `HotCodePushCore` and the Android library `com.hotcodepush:core-android`, each pinned to a commit until it is published. On iOS the plugin is a Swift package: `cordova-ios` adds it to the app, and Swift Package Manager resolves the core at the pinned revision on its own, without CocoaPods. On Android the plugin switches the project's Kotlin Gradle plugin on at the version the core is compiled with, through the `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion` preferences, and adds core-android's `maven` branch, where the pinned commit is published, to the app module's repositories; a preference in your own `config.xml` wins over either.
 
@@ -24,15 +24,15 @@ On Android, `AndroidInsecureFileModeEnabled` loads the app from `file://`, where
 ```js
 document.addEventListener('deviceready', async () => {
   const result = await HotCodePush.sync();
-  if (result.status === 'UPDATED') {
+  if (result.status === 'DOWNLOADED') {
     console.log(
-      `release #${result.release.number} installs ${result.installAt}`,
+      `release #${result.release.number} applies at ${result.applyAt}`,
     );
   }
 });
 ```
 
-The plugin is `window.HotCodePush` once `deviceready` has fired, every method returning a promise. With `autoCheck` on, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and install strategies' business; `sync()` is for the moment you want an update now. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`; one that protects a flow sets `installStrategy` to `manual` and calls `applyUpdate()` when it is ready.
+The plugin is `window.HotCodePush` once `deviceready` has fired, every method returning a promise. With `checkStrategy` at `auto`, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and apply strategies' business; `sync()` runs one such cycle when you want an update now, and with `checkStrategy` at `manual` it is the only way a cycle starts. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`, naming the apply strategies for that cycle if it wants; one that protects a flow sets `applyStrategy` to `manual` and calls `applyUpdate()` when it is ready.
 
 A TypeScript project gets the global and the result types from the package:
 
@@ -56,7 +56,8 @@ npm ci
 npm run lint
 npm run build
 npm run verify:ios       # a fresh Cordova app with the plugin, built for the simulator
-npm run verify:android   # the same app, built for Android
+npm run verify:android   # the same app, built for Android; both check the resource file in the built app
+npm test                 # the hook and the Xcode script, the script's tests on macOS only
 ```
 
 The cores and their tests live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
