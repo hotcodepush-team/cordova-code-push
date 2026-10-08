@@ -17,9 +17,6 @@
         <clobbers target="HotCodePush" />
     </js-module>
 
-    <!-- The build step: writes the resource file the SDK reads into each prepared platform and creates the store build, the binary. -->
-    <hook type="after_prepare" src="scripts/binary-create.js" />
-
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="HotCodePush">
@@ -33,6 +30,7 @@
         <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         </config-file>
+        <!-- The core and the build step, a Gradle task per variant. -->
         <framework src="src/android/hotcodepush.gradle" custom="true" type="gradleReference" />
         <source-file src="src/android/CordovaBundleLoader.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
         <source-file src="src/android/HotCodePushPlugin.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
@@ -40,6 +38,9 @@
 
     <!-- A Swift package: Package.swift names the sources and the core it is built on. -->
     <platform name="ios" package="swift">
+        <!-- The build step: no element adds an Xcode build phase, so the hook adds it to the generated project. -->
+        <hook type="after_platform_add" src="scripts/add-binary-create-phase.js" />
+        <hook type="after_prepare" src="scripts/add-binary-create-phase.js" />
         <config-file target="config.xml" parent="/*">
             <feature name="HotCodePush">
                 <param name="ios-package" value="HotCodePushPlugin" />

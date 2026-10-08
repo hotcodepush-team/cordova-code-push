@@ -26,7 +26,8 @@
   "types": "dist/definitions.d.ts",
   "files": [
     "dist/",
-    "scripts/binary-create.js",
+    "scripts/add-binary-create-phase.js",
+    "scripts/binary-create-xcode.sh",
     "src/android/",
     "src/ios/",
     "Package.swift",
@@ -37,12 +38,14 @@
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict",
-    "verify": "npm run lint && npm run build",
+    "test": "node --test scripts/*.test.mjs",
+    "verify": "npm run lint && npm test && npm run build",
     "verify:android": "npm run build && node scripts/build-test-app.mjs android",
     "verify:ios": "npm run build && node scripts/build-test-app.mjs ios"
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@e288a9c4a976ddeca86d1f85fe616c7528e9912f"
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@e288a9c4a976ddeca86d1f85fe616c7528e9912f",
+    "xcode": "3.0.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

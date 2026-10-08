@@ -1,13 +1,22 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// The check that the plugin compiles: a fresh Cordova app in a temporary directory, the platform at the version this
-// repository pins or the one named, the plugin added from this checkout, and a debug build; the build step is the
-// CLI's and stays out.
+// The check that the plugin compiles and its build step lands: a fresh Cordova app in a temporary directory, the
+// platform at the version this repository pins or the one named, the plugin added from this checkout, a debug build,
+// and hotcodepush.json in the built app's www; a stand-in for the CLI writes the file.
 // Usage: node scripts/build-test-app.mjs android|ios [platform version]
+
+const APP_NAME = 'Verify';
 
 const PLATFORMS = ['android', 'ios'];
 const pluginDirectory = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,6 +38,15 @@ const appDirectory = join(
   'app',
 );
 
+// The CLI as the build step finds it through npx: it writes an empty resource file where it is told to.
+const CLI_STAND_IN = `#!/usr/bin/env node
+const { mkdirSync, writeFileSync } = require('node:fs');
+const { dirname } = require('node:path');
+const resourceFilePath = process.argv[process.argv.indexOf('--out') + 1];
+mkdirSync(dirname(resourceFilePath), { recursive: true });
+writeFileSync(resourceFilePath, '{}');
+`;
+
 function run(args, cwd) {
   execFileSync(cordova, args, { cwd, stdio: 'inherit' });
 }
@@ -47,8 +65,36 @@ function raiseIosDeploymentTarget() {
   );
 }
 
+function installCliStandIn() {
+  const binDirectory = join(appDirectory, 'node_modules', '.bin');
+  mkdirSync(binDirectory, { recursive: true });
+  writeFileSync(join(binDirectory, 'hotcodepush'), CLI_STAND_IN, {
+    mode: 0o755,
+  });
+}
+
+function isResourceFileBuilt() {
+  if (platform === 'ios') {
+    return existsSync(
+      join(
+        appDirectory,
+        'platforms/ios/build/Debug-iphonesimulator',
+        `${APP_NAME}.app`,
+        'www/hotcodepush.json',
+      ),
+    );
+  }
+  const apkPath = join(
+    appDirectory,
+    'platforms/android/app/build/outputs/apk/debug/app-debug.apk',
+  );
+  return execFileSync('unzip', ['-Z1', apkPath], { encoding: 'utf8' })
+    .split('\n')
+    .includes('assets/www/hotcodepush.json');
+}
+
 try {
-  run(['create', appDirectory, 'com.hotcodepush.verify', 'Verify']);
+  run(['create', appDirectory, 'com.hotcodepush.verify', APP_NAME]);
   if (platform === 'ios') {
     raiseIosDeploymentTarget();
   }
@@ -61,17 +107,20 @@ try {
     appDirectory,
   );
   run(['plugin', 'add', pluginDirectory], appDirectory);
+  installCliStandIn();
   run(
     [
       'build',
       platform,
       '--debug',
       ...(platform === 'ios' ? ['--emulator'] : []),
-      '--nohooks',
-      'after_prepare',
     ],
     appDirectory,
   );
+  if (!isResourceFileBuilt()) {
+    console.error(`The ${platform} build has no www/hotcodepush.json.`);
+    process.exitCode = 1;
+  }
 } finally {
   rmSync(dirname(appDirectory), { force: true, recursive: true });
 }

@@ -24,6 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx eslint . && npx prettier --check .
+      - run: npm test
       - run: npm run build
   android:
     name: Build the plugin into an Android app (cordova-android ${{ matrix.cordova-android }})
@@ -60,6 +61,8 @@ jobs:
       - run: npm ci
       - run: brew install swiftlint
       - run: swiftlint lint --quiet --strict
+      # The Xcode build step's tests run on macOS alone.
+      - run: npm test
       - run: npm run verify:ios
   preview:
     name: Publish the preview build to pkg.pr.new
