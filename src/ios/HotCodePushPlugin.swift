@@ -15,8 +15,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     private let responder = ServedFileResponder()
     private var core: Core?
     private var eventCallbackId: String?
-    /// The page loads the SDK started whose start Cordova has not reported yet, on the main thread: the first page and every reload of the core.
-    private var expectedPageStartCount = 0
     private var loader: CordovaBundleLoader?
     /// What every call rejects with while there is no core: the resource file is missing, or the core's reader refused it.
     private var notConfiguredMessage = HotCodePushPlugin.missingResourceFileMessage
@@ -54,25 +52,19 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         NotificationCenter.default.addObserver(self, selector: #selector(handleDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         loader.beginServing(bundleId: core.handleAppStartBlocking())
-        expectedPageStartCount = 1
     }
 
     /// A page started: the callback the events went to belongs to the page that is gone. A page the SDK did not load —
-    /// `location.reload()`, a navigation, the recovery from a web content crash — is a reload the core did not perform.
+    /// `location.reload()`, a navigation, the recovery from a web content crash — is not reported to the core: what runs
+    /// and when it is gated is the process start's.
     override public func onReset() {
         eventCallbackId = nil
-        if expectedPageStartCount > 0 {
-            expectedPageStartCount -= 1
-        } else if let core = core {
-            Task { await core.handleAppReload() }
-        }
     }
 
     /// The SDK's own reload, on the main thread: the departing page loses its callback first, so an event the core sends
     /// with the reload, a rollback's above all, is kept for the page that follows.
     private func reloadStartPage() {
         eventCallbackId = nil
-        expectedPageStartCount += 1
         viewController?.loadStartPage()
     }
 

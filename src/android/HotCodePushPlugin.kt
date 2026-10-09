@@ -49,9 +49,6 @@ import java.io.IOException
 class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private var core: Core? = null
     private var eventCallback: CallbackContext? = null
-
-    /** The page loads the SDK started whose start Cordova has not reported yet: the first page and every reload of the core. */
-    private var expectedPageStartCount = 0
     private var hasPaused = false
     private var loader: CordovaBundleLoader? = null
 
@@ -100,7 +97,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         this.core = core
         this.loader = loader
         loader.beginServing(core.handleAppStartBlocking())
-        synchronized(this) { expectedPageStartCount = 1 }
     }
 
     /** A request for the running bundle's own files is answered from its directory; Cordova answers the rest from the binary. */
@@ -129,15 +125,10 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
     /**
      * A page started: the callback the events went to belongs to the page that is gone. A page the SDK did not load,
-     * `location.reload()` or a navigation, is a reload the core did not perform.
+     * `location.reload()` or a navigation, is not reported to the core: what runs and when it is gated is the process start's.
      */
     override fun onReset() {
-        val isStartedBySdk = synchronized(this) {
-            eventCallback = null
-            (expectedPageStartCount > 0).also { if (it) expectedPageStartCount-- }
-        }
-        val core = core ?: return
-        if (!isStartedBySdk) scope.launch { core.handleAppReload() }
+        synchronized(this) { eventCallback = null }
     }
 
     override fun execute(action: String, args: JSONArray, callbackContext: CallbackContext): Boolean {
@@ -284,10 +275,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
      * a rollback's above all, is kept for the page that follows.
      */
     private fun reloadStartPage() {
-        synchronized(this) {
-            eventCallback = null
-            expectedPageStartCount++
-        }
+        synchronized(this) { eventCallback = null }
         cordova.activity.runOnUiThread { webView.loadUrlIntoView(launchUrl(), false) }
     }
 
