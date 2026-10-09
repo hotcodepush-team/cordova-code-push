@@ -56,6 +56,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The Swift package carries no resources: a package named after the scoped plugin id would lay its resource bundle under `@hotcodepush/` inside the app, so the plugin calls no required-reason API of its own, keeps the served bundle's key in the core's store, and leaves the privacy manifest to the core.
 - The resource file is `www/hotcodepush.json`, written by the Xcode phase into the built app's `www` and by the Gradle task into the variant's generated `www` assets; the embedded bundle is the platform's `www`, addressed by the embedded manifest's hashes, without the native glue the loader serves from the binary.
 - The plugin's `plugin.xml` sets `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion`, so an app adds the plugin and edits nothing; the app's own preference wins.
+- A page start the plugin did not request, `location.reload()`, a navigation, iOS's recovery from a web content crash, is never reported to the core: the process start decides what runs and gates it, a release stored for the next start waits for the next launch, and only the SDK's own reloads hold `updateRolledBack` for the page that follows.
 
 ## Agent workspace
 

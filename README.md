@@ -44,6 +44,8 @@ const result: SyncResult = await HotCodePush.sync();
 
 A bundle carries your web build, `www`. `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary, since they are the bridge to the native plugins compiled into it.
 
+A release that applies at `next-start` waits for the app's next launch; `location.reload()` or a navigation reloads the running bundle and applies nothing.
+
 ## Documentation
 
 The SDK reference — configuration, methods, events, types and reasons — is at [hotcodepush.com/docs/cordova](https://hotcodepush.com/docs/cordova).
