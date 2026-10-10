@@ -1,15 +1,10 @@
 #!/usr/bin/env node
 // Copies the demo app into a scratch directory as one of the two variants the baseline compares:
-// `with` installs the plugin tarball, `without` removes the plugin, and with it its hook and its resource file,
+// `with` installs the plugin tarball, `without` removes the plugin, and with it its Gradle task and its Xcode phase,
 // and swaps the screen's script for the same screen with nothing behind it. Both log the moment of their first paint.
+// Neither is built here: the build step runs inside the native build, which the measuring scripts start.
 import { execFileSync } from 'node:child_process';
-import {
-  cpSync,
-  existsSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const [source, target, variant, tarball] = process.argv.slice(2);
@@ -89,23 +84,11 @@ function getElement<T extends HTMLElement = HTMLElement>(id: string): T {
 run('npm', ['install', '--no-audit', '--no-fund']);
 run('npm', ['run', 'build']);
 run('npx', ['cordova', 'prepare']);
-if (
-  variant === 'with' &&
-  !existsSync(
-    join(target, 'platforms/android/app/src/main/assets/www/hotcodepush.json'),
-  )
-) {
-  throw new Error(
-    "the resource file was not written; the plugin's after_prepare hook did not run",
-  );
-}
 console.log(`${variant}: ${target}`);
 
 function run(command, args) {
   execFileSync(command, args, {
     cwd: target,
-    // The build step builds without the API: the measurement needs no credential and creates no binary.
-    env: { ...process.env, HOTCODEPUSH_OFFLINE: '1' },
     stdio: ['ignore', 'ignore', 'inherit'],
   });
 }

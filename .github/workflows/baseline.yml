@@ -43,5 +43,16 @@ jobs:
         run: npm ci && npm run build && npm pack --pack-destination "$RUNNER_TEMP"
       - name: Prepare the demo with the plugin
         run: node plugin/benchmarks/prepare-demo.mjs demo "$RUNNER_TEMP/with" with "$(ls "$RUNNER_TEMP"/hotcodepush-cordova-code-push-*.tgz)"
+      # The demo's build.json signs the release build with the debug keystore, which the Android Gradle plugin
+      # creates only for a signing config named debug, so a fresh runner may have none; it is generated with the
+      # public defaults.
+      - name: Create the debug keystore
+        run: |
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            mkdir -p "$HOME/.android"
+            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android \
+              -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname 'CN=Android Debug,O=Android,C=US'
+          fi
       - name: Measure the sizes and compare them with the baseline
         run: node plugin/benchmarks/measure-size.mjs "$RUNNER_TEMP/with" > "$RUNNER_TEMP/sizes.json" && node plugin/benchmarks/guard-size.mjs plugin/benchmarks/baseline.json "$RUNNER_TEMP/sizes.json" >> "$GITHUB_STEP_SUMMARY"
