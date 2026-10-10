@@ -4,8 +4,9 @@ import XCTest
 
 /// `CordovaBundleLoader.servedFile(forRequestPath:)`: which requests a running bundle answers, with which of its files,
 /// and which it leaves to Cordova. The path is the request URL's `path`, as the plugin passes it: percent-decoded, with its leading slash.
+/// `isConnectionMetered()`: read under the lock the path monitor writes under, which the Thread Sanitizer of the shared scheme checks.
 final class CordovaBundleLoaderTests: XCTestCase {
-    private let loader = CordovaBundleLoader(store: UserDefaultsStore(defaults: UserDefaults(suiteName: "CordovaBundleLoaderTests")!), startPage: "index.html", reloadStartPage: {})
+    private let loader = CordovaBundleLoaderTests.makeLoader()
 
     func testShouldLeaveTheRequestToCordovaWhenTheStartHasNotDecided() {
         let servedFile = loader.servedFile(forRequestPath: "/index.html")
@@ -109,8 +110,21 @@ final class CordovaBundleLoaderTests: XCTestCase {
         assertServedFile(servedFile, equals: .file(bundleFile("index.html", bundleId: "b1")))
     }
 
+    /// A loader started here, so its monitor delivers the first path on its own queue while the state is read; only a race fails, under the sanitizer.
+    func testShouldReadTheMeteredStateWhileThePathMonitorWritesIt() {
+        let startedLoader = CordovaBundleLoaderTests.makeLoader()
+        let deadline = Date().addingTimeInterval(0.5)
+        while Date() < deadline {
+            _ = startedLoader.isConnectionMetered()
+        }
+    }
+
     private func bundleFile(_ relativePath: String, bundleId: String) -> URL {
         return loader.projectionDirectory(bundleId: bundleId).appendingPathComponent(relativePath)
+    }
+
+    private static func makeLoader() -> CordovaBundleLoader {
+        return CordovaBundleLoader(store: UserDefaultsStore(defaults: UserDefaults(suiteName: "CordovaBundleLoaderTests")!), startPage: "index.html", reloadStartPage: {})
     }
 
     /// `ServedFile` is not Equatable: a file compares by its path.
