@@ -6,7 +6,7 @@ What the plugin adds to an app, measured on the demo app and guarded from then o
 
 | Number                     | How                                                                                                                                                                                                      |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Binary size added, Android | the release APK, signed with the debug keystore the demo's `build.json` names, of the demo built with the plugin minus the same build without it, in bytes                                                                                                     |
+| Binary size added, Android | the release APK, signed with the debug keystore the demo's `build.json` names, of the demo built with the plugin minus the same build without it, in bytes                                               |
 | Binary size added, iOS     | the Release simulator app — every file summed — built with the plugin minus the same build without it, in bytes                                                                                          |
 | Cold start added, Android  | from the activity's start (`ActivityTaskManager: START` in logcat) to the web view's first paint, on the Pixel_9_Pro emulator; the median of five cold launches with the plugin minus the median without |
 | Cold start added, iOS      | from the launch call to the web view's first paint, on an iPhone simulator; the same medians                                                                                                             |
