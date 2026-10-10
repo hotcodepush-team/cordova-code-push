@@ -40,8 +40,6 @@ if (!flags.includes('--android-only')) {
 }
 console.log(JSON.stringify(sizes));
 
-// `cordova build`, not `compile`: its prepare runs the plugin's after_prepare hook, which adds the Xcode phase that
-// the prepare restoring the plugin into a fresh copy skips.
 function build(args) {
   execFileSync('npx', ['cordova', 'build', ...args], {
     cwd: target,

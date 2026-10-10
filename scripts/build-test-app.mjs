@@ -12,8 +12,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // The check that the plugin compiles and its build step lands: a fresh Cordova app in a temporary directory, the
-// platform at the version this repository pins or the one named, the plugin added from this checkout, a debug build,
-// and hotcodepush.json in the built app's www; a stand-in for the CLI writes the file.
+// platform at the version this repository pins or the one named, the plugin added from this checkout, both restored by
+// `cordova prepare` as on a fresh clone of the app, a debug build, and hotcodepush.json in the built app's www; a
+// stand-in for the CLI writes the file.
 // Usage: node scripts/build-test-app.mjs android|ios [platform version]
 
 const APP_NAME = 'Verify';
@@ -65,6 +66,17 @@ function raiseIosDeploymentTarget() {
   );
 }
 
+/**
+ * The app in the state a fresh clone of it is in: platforms and plugins are not committed, so the first
+ * `cordova prepare`, naming no platform, restores them from package.json.
+ */
+function restoreAsFreshClone() {
+  for (const directoryName of ['platforms', 'plugins']) {
+    rmSync(join(appDirectory, directoryName), { recursive: true });
+  }
+  run(['prepare'], appDirectory);
+}
+
 function installCliStandIn() {
   const binDirectory = join(appDirectory, 'node_modules', '.bin');
   mkdirSync(binDirectory, { recursive: true });
@@ -107,10 +119,12 @@ try {
     appDirectory,
   );
   run(['plugin', 'add', pluginDirectory], appDirectory);
+  restoreAsFreshClone();
   installCliStandIn();
+  // `compile`, not `build`: a build prepares the platform again, which would hide a build step the restore missed.
   run(
     [
-      'build',
+      'compile',
       platform,
       '--debug',
       ...(platform === 'ios' ? ['--emulator'] : []),

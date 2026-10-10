@@ -50,7 +50,9 @@ describe('add-binary-create-phase.js', () => {
       ({ name }) => name,
     );
 
-    addBinaryCreatePhaseToPlatform({ opts: { projectRoot } });
+    addBinaryCreatePhaseToPlatform({
+      opts: { platforms: ['ios'], projectRoot },
+    });
 
     const phases = readPhases(projectFilePath);
     assert.deepEqual(
@@ -69,12 +71,26 @@ describe('add-binary-create-phase.js', () => {
   });
 
   it('should leave the project as it is when the phase is there', () => {
-    addBinaryCreatePhaseToPlatform({ opts: { projectRoot } });
+    addBinaryCreatePhaseToPlatform({
+      opts: { platforms: ['ios'], projectRoot },
+    });
     const projectWithPhase = readFileSync(projectFilePath, 'utf8');
 
-    addBinaryCreatePhaseToPlatform({ opts: { projectRoot } });
+    addBinaryCreatePhaseToPlatform({
+      opts: { platforms: ['ios'], projectRoot },
+    });
 
     assert.equal(readFileSync(projectFilePath, 'utf8'), projectWithPhase);
+  });
+
+  it('should leave the project as it is when iOS is not among the prepared platforms', () => {
+    const templateProject = readFileSync(projectFilePath, 'utf8');
+
+    addBinaryCreatePhaseToPlatform({
+      opts: { platforms: ['android'], projectRoot },
+    });
+
+    assert.equal(readFileSync(projectFilePath, 'utf8'), templateProject);
   });
 });
 

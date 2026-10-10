@@ -23,10 +23,15 @@ const PHASE_SCRIPT = [
 ].join('\\n');
 
 /**
- * The build step on iOS, run by Cordova after the platform is added and after every prepare: Cordova has no
- * `plugin.xml` element for a build phase, so the hook adds the phase that runs the CLI to the generated Xcode project.
+ * The build step on iOS, run by Cordova after every prepare, the one `cordova platform add` runs included: Cordova has
+ * no `plugin.xml` element for a build phase, so the hook adds the phase that runs the CLI to the generated Xcode
+ * project. The hook runs for every platform and acts when iOS is among the prepared ones; `opts.cordova.platforms` is
+ * no guide, as a fresh checkout's first prepare lists it before restoring the platforms.
  */
 module.exports = function addBinaryCreatePhaseToPlatform(context) {
+  if (!context.opts.platforms.includes('ios')) {
+    return;
+  }
   addBinaryCreatePhase(
     join(
       context.opts.projectRoot,
