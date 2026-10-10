@@ -17,6 +17,11 @@
         <clobbers target="HotCodePush" />
     </js-module>
 
+    <!-- The iOS build step: no element adds an Xcode build phase, so the hook adds it to the generated project after
+         every prepare. It stands outside the iOS platform: a fresh checkout's first prepare lists the platforms before
+         it restores them, and finds no platform's hooks. -->
+    <hook type="after_prepare" src="scripts/add-binary-create-phase.js" />
+
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="HotCodePush">
@@ -38,9 +43,6 @@
 
     <!-- A Swift package: Package.swift names the sources and the core it is built on. -->
     <platform name="ios" package="swift">
-        <!-- The build step: no element adds an Xcode build phase, so the hook adds it to the generated project. -->
-        <hook type="after_platform_add" src="scripts/add-binary-create-phase.js" />
-        <hook type="after_prepare" src="scripts/add-binary-create-phase.js" />
         <config-file target="config.xml" parent="/*">
             <feature name="HotCodePush">
                 <param name="ios-package" value="HotCodePushPlugin" />

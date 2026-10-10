@@ -106,8 +106,6 @@ async function measureIos() {
   return summarize(samples);
 }
 
-// `cordova build`, not `compile`: its prepare runs the plugin's after_prepare hook, which adds the Xcode phase that
-// the prepare restoring the plugin into a fresh copy skips.
 function build(buildArgs) {
   execFileSync('npx', ['cordova', 'build', ...buildArgs], {
     cwd: target,
