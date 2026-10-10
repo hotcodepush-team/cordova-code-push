@@ -3,7 +3,7 @@ import XCTest
 @testable import HotCodePushCordova
 
 /// `ServedFileResponder.respond(to:with:)`: the status, the headers and the bytes a scheme task receives for a served file,
-/// with or without a `Range` header, and nothing after the web view stops the task.
+/// with or without a `Range` header, and nothing after the web view stops the task; `readChunk(of:upToCount:)`, which throws where a read fails.
 final class ServedFileResponderTests: XCTestCase {
     private let responder = ServedFileResponder()
     private var directory: URL!
@@ -201,6 +201,13 @@ final class ServedFileResponderTests: XCTestCase {
 
         wait(for: [task.ended], timeout: 0.5)
         XCTAssertTrue(task.receivedData.isEmpty)
+    }
+
+    func testShouldThrowWhenAChunkCannotBeRead() throws {
+        let file = try writeFile("app.js", contents: "0123456789")
+        let writeOnlyHandle = try FileHandle(forWritingTo: file)
+
+        XCTAssertThrowsError(try ServedFileResponder.readChunk(of: writeOnlyHandle, upToCount: 4))
     }
 
     /// Waits for the finish: the body is read on a background queue and handed to the task on the main queue.
