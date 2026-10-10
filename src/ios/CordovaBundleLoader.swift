@@ -34,7 +34,7 @@ final class CordovaBundleLoader: BundleLoader {
         self.startPage = startPage
         self.reloadStartPage = reloadStartPage
         monitor.pathUpdateHandler = { [weak self] path in
-            self?.isMetered = path.isExpensive || path.isConstrained
+            self?.setIsMetered(path.isExpensive || path.isConstrained)
         }
         monitor.start(queue: DispatchQueue.global(qos: .utility))
     }
@@ -81,6 +81,8 @@ final class CordovaBundleLoader: BundleLoader {
     }
 
     func isConnectionMetered() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
         return isMetered
     }
 
@@ -115,6 +117,12 @@ final class CordovaBundleLoader: BundleLoader {
         lock.lock()
         defer { lock.unlock() }
         return runningBundleId
+    }
+
+    private func setIsMetered(_ isMetered: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        self.isMetered = isMetered
     }
 
     private func setRunningBundleId(_ bundleId: String?) {

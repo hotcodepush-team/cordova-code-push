@@ -65,23 +65,33 @@ final class ServedFileResponder {
     }
 
     /// Reads off the main thread and hands every chunk back on it, where a stop is seen before the next callback.
+    /// A read that fails ends the task with its error, as Cordova's own handler does: the response is already sent.
     private func send(_ range: ByteRange, of handle: FileHandle, to task: WKURLSchemeTask) {
-        handle.seek(toFileOffset: range.offset)
+        let result = Result { try sendChunks(range, of: handle, to: task) }
+        handle.closeFile()
+        DispatchQueue.main.async { [weak self] in
+            guard self?.isActive(task) == true else { return }
+            switch result {
+            case .success:
+                task.didFinish()
+            case .failure(let error):
+                task.didFailWithError(error)
+            }
+            self?.stop(task)
+        }
+    }
+
+    private func sendChunks(_ range: ByteRange, of handle: FileHandle, to task: WKURLSchemeTask) throws {
+        try handle.seek(toOffset: range.offset)
         var remaining = range.length
         while remaining > 0 {
-            let chunk = handle.readData(ofLength: min(remaining, ServedFileResponder.chunkSize))
+            let chunk = try ServedFileResponder.readChunk(of: handle, upToCount: min(remaining, ServedFileResponder.chunkSize))
             if chunk.isEmpty { break }
             remaining -= chunk.count
             DispatchQueue.main.async { [weak self] in
                 guard self?.isActive(task) == true else { return }
                 task.didReceive(chunk)
             }
-        }
-        handle.closeFile()
-        DispatchQueue.main.async { [weak self] in
-            guard self?.isActive(task) == true else { return }
-            task.didFinish()
-            self?.stop(task)
         }
     }
 
@@ -112,6 +122,15 @@ final class ServedFileResponder {
             return UTType(filenameExtension: pathExtension)?.preferredMIMEType ?? fallbackMimeType
         }
         return (ServedFileResponder.self as LegacyMimeTypes.Type).legacyMimeType(forExtension: pathExtension) ?? fallbackMimeType
+    }
+
+    /// Up to `count` bytes, none at the end of the file. A read that fails throws from iOS 13.4 on;
+    /// before it, `readData(ofLength:)` raises an Objective-C exception, which no Swift code catches.
+    static func readChunk(of handle: FileHandle, upToCount count: Int) throws -> Data {
+        if #available(iOS 13.4, *) {
+            return try handle.read(upToCount: count) ?? Data()
+        }
+        return handle.readData(ofLength: count)
     }
 
     /// The range a `Range: bytes=` header asks per RFC 9110, `<start>-<end>`, `<start>-` or `-<length>`, clamped to the file.
