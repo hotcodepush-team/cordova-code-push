@@ -40,7 +40,7 @@
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict",
     "test": "node --test scripts/*.test.mjs src/*.test.mjs",
     "test:android": "cd tests/android && ./gradlew test --console=plain",
-    "test:ios": "xcodebuild test -scheme \"$(basename \"$PWD\")\" -destination 'platform=macOS,variant=Mac Catalyst' -quiet",
+    "test:ios": "xcodebuild test -scheme HotCodePushCordovaTests -destination 'platform=macOS,variant=Mac Catalyst' -quiet",
     "verify": "npm run lint && npm test && npm run build",
     "verify:android": "npm run build && node scripts/build-test-app.mjs android",
     "verify:ios": "npm run build && node scripts/build-test-app.mjs ios"

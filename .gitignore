@@ -4,7 +4,11 @@ node_modules
 
 # iOS
 .build
-.swiftpm
+# Xcode's state for the package, but for the shared scheme the tests run under
+.swiftpm/*
+!.swiftpm/xcode
+.swiftpm/xcode/*
+!.swiftpm/xcode/xcshareddata
 DerivedData
 Package.resolved
 xcuserdata
