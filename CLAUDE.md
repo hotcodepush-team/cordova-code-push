@@ -14,6 +14,7 @@ plugin.xml             the plugin: the JavaScript module, the iOS hook that adds
 Package.swift          the iOS half as a Swift package named after the plugin's id, over Cordova and HotCodePushCore
 src/hotcodepush.ts     the module Cordova clobbers onto window.HotCodePush: one native call per method, the events, the readiness signal
 src/definitions.ts     the types the package exports and the global it declares
+src/hotcodepush.test.mjs  the module's tests on node --test, the module loaded as Cordova's factory with cordova/exec recorded
 src/ios                the Cordova plugin, the bundle loader and the scheme-task responder over HotCodePushCore
 src/android            the Cordova plugin and the bundle loader over com.hotcodepush:core-android, and the Gradle reference with the build step's task per variant
 scripts/add-binary-create-phase.js  the iOS hook: adds the build phase to the generated Xcode project, once, at platform add and every prepare
@@ -21,6 +22,8 @@ scripts/binary-create-xcode.sh      what the phase runs, with the Node lookup; `
 scripts/*.test.mjs                  their tests on node --test
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
+tests/android          the Kotlin of src/android built on its own over cordova-android's framework, with its Robolectric tests of the loader's path guards
+tests/ios              the XCTest target over the loader and the scheme-task responder, run on Mac Catalyst under the shared scheme in .swiftpm
 ```
 
 The native cores live in `core-ios` and `core-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module from core-android's `maven` branch by full sha in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
@@ -28,12 +31,14 @@ The plugin layer keeps the bundle loader, the readiness signal and the bridge, n
 
 ## Commands
 
-| Command                                | Does                                                     |
-| -------------------------------------- | -------------------------------------------------------- |
-| `npm run lint`                         | ESLint, Prettier and SwiftLint                           |
-| `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names    |
-| `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform  |
-| `npm test`                             | the hook and the script; the script's tests run on macOS |
+| Command                                | Does                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| `npm run lint`                         | ESLint, Prettier and SwiftLint                                       |
+| `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names                |
+| `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform              |
+| `npm test`                             | the module, the hook and the script; the script's tests run on macOS |
+| `npm run test:android`                 | the Kotlin's Robolectric tests, in `tests/android`                   |
+| `npm run test:ios`                     | the Swift tests on Mac Catalyst, in `tests/ios`                      |
 
 Run `npm run fmt` before every commit.
 The package is CommonJS on purpose: Cordova `require`s a plugin's hook script, so the tooling's own modules are `.mjs`.

@@ -59,7 +59,9 @@ npm run lint
 npm run build
 npm run verify:ios       # a fresh Cordova app with the plugin, built for the simulator
 npm run verify:android   # the same app, built for Android; both check the resource file in the built app
-npm test                 # the hook and the Xcode script, the script's tests on macOS only
+npm test                 # the module, the hook and the Xcode script, the script's tests on macOS only
+npm run test:android     # the Kotlin's Robolectric tests, built on their own
+npm run test:ios         # the Swift tests, on Mac Catalyst
 ```
 
 The cores and their tests live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
