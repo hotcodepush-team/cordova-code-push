@@ -22,6 +22,8 @@ if (!target || (!androidSerial && !iosUdid)) {
   process.exit(2);
 }
 const bundleId = 'com.hotcodepush.demo.cordova';
+// A benchmark build is never shipped: offline, the build step writes the resource file without a channel.
+const env = { ...process.env, HOTCODEPUSH_OFFLINE: '1' };
 const marker = /\[baseline\] first paint (\d+)/;
 
 const result = {};
@@ -34,7 +36,7 @@ async function measureAndroid() {
     target,
     'platforms/android/app/build/outputs/apk/debug/app-debug.apk',
   );
-  compile(['android', '--debug']);
+  build(['android', '--debug']);
   // A fresh install: state an earlier install left would make the first launch reload the embedded bundle.
   adb('uninstall', bundleId);
   adb('install', apk);
@@ -64,7 +66,7 @@ async function measureAndroid() {
 async function measureIos() {
   // A Debug build, as on Android; Cordova's logger sends the web view's console to the process's output.
   // The console arrives through a pseudo-terminal: a pipe would buffer the process's output until it exits.
-  compile(['ios', '--debug', '--emulator']);
+  build(['ios', '--debug', '--emulator']);
   simctl('uninstall', iosUdid, bundleId);
   simctl(
     'install',
@@ -104,9 +106,12 @@ async function measureIos() {
   return summarize(samples);
 }
 
-function compile(compileArgs) {
-  execFileSync('npx', ['cordova', 'compile', ...compileArgs], {
+// `cordova build`, not `compile`: its prepare runs the plugin's after_prepare hook, which adds the Xcode phase that
+// the prepare restoring the plugin into a fresh copy skips.
+function build(buildArgs) {
+  execFileSync('npx', ['cordova', 'build', ...buildArgs], {
     cwd: target,
+    env,
     stdio: ['ignore', 'ignore', 'inherit'],
   });
 }

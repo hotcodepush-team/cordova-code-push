@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// The binary size of a prepared demo variant: the unsigned release APK and the Release simulator `.app`,
-// each in bytes, printed as JSON. `--android-only` skips the Xcode build on a runner without one.
+// The binary size of a prepared demo variant: the release APK, signed with the debug keystore the demo's build.json
+// names, and the Release simulator `.app`, each in bytes, printed as JSON. `--android-only` skips the Xcode build on a
+// runner without one.
 import { execFileSync } from 'node:child_process';
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,19 +12,23 @@ if (!target) {
   process.exit(2);
 }
 
+// A benchmark build is never shipped: offline, the build step writes the resource file without a channel and the
+// release build creates no binary, whether or not the machine holds a HotCodePush token.
+const env = { ...process.env, HOTCODEPUSH_OFFLINE: '1' };
+
 const sizes = {};
 // Cordova's release build is an app bundle unless it is asked for the APK the baseline weighs.
-compile(['android', '--release', '--', '--packageType=apk']);
+build(['android', '--release', '--', '--packageType=apk']);
 sizes.android = {
   releaseApkBytes: statSync(
     join(
       target,
-      'platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk',
+      'platforms/android/app/build/outputs/apk/release/app-release.apk',
     ),
   ).size,
 };
 if (!flags.includes('--android-only')) {
-  compile(['ios', '--release', '--emulator']);
+  build(['ios', '--release', '--emulator']);
   sizes.ios = {
     simulatorAppBytes: directorySize(
       join(
@@ -35,9 +40,12 @@ if (!flags.includes('--android-only')) {
 }
 console.log(JSON.stringify(sizes));
 
-function compile(args) {
-  execFileSync('npx', ['cordova', 'compile', ...args], {
+// `cordova build`, not `compile`: its prepare runs the plugin's after_prepare hook, which adds the Xcode phase that
+// the prepare restoring the plugin into a fresh copy skips.
+function build(args) {
+  execFileSync('npx', ['cordova', 'build', ...args], {
     cwd: target,
+    env,
     stdio: ['ignore', 'ignore', 'inherit'],
   });
 }
