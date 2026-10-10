@@ -4,44 +4,50 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
+  symlinkSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
+import cordovaProjectFile from 'cordova-ios/lib/projectFile.js';
 import xcode from 'xcode';
 import addBinaryCreatePhaseToPlatform from './add-binary-create-phase.js';
 
-// The project `cordova platform add ios` generates, from the cordova-ios this repository builds against.
-const TEMPLATE_PROJECT_FILE_PATH = join(
+// The cordova-ios this repository builds against, which the test app's platform resolves as an app's platform does.
+const CORDOVA_IOS_PATH = join(
   import.meta.dirname,
   '..',
   'node_modules',
   'cordova-ios',
-  'templates',
-  'project',
-  'App.xcodeproj',
-  'project.pbxproj',
 );
 
+// The project `cordova platform add ios` generates, from that cordova-ios.
+const TEMPLATE_PATH = join(CORDOVA_IOS_PATH, 'templates', 'project');
+
 describe('add-binary-create-phase.js', () => {
+  let platformRoot;
   let projectFilePath;
   let projectRoot;
 
   beforeEach(() => {
     projectRoot = mkdtempSync(join(tmpdir(), 'add-binary-create-phase-'));
-    projectFilePath = join(
-      projectRoot,
-      'platforms',
-      'ios',
-      'App.xcodeproj',
-      'project.pbxproj',
+    platformRoot = join(projectRoot, 'platforms', 'ios');
+    projectFilePath = join(platformRoot, 'App.xcodeproj', 'project.pbxproj');
+    for (const path of ['App.xcodeproj/project.pbxproj', 'App/config.xml']) {
+      mkdirSync(dirname(join(platformRoot, path)), { recursive: true });
+      copyFileSync(join(TEMPLATE_PATH, path), join(platformRoot, path));
+    }
+    mkdirSync(join(projectRoot, 'node_modules'));
+    symlinkSync(
+      CORDOVA_IOS_PATH,
+      join(projectRoot, 'node_modules', 'cordova-ios'),
     );
-    mkdirSync(dirname(projectFilePath), { recursive: true });
-    copyFileSync(TEMPLATE_PROJECT_FILE_PATH, projectFilePath);
   });
 
   afterEach(() => {
+    cordovaProjectFile.purgeProjectFileCache(realpathSync(platformRoot));
     rmSync(projectRoot, { force: true, recursive: true });
   });
 
@@ -68,6 +74,43 @@ describe('add-binary-create-phase.js', () => {
       phase.shellScript,
       /\/bin\/sh \\"\$SRCROOT\/\.\.\/\.\.\/plugins\/@hotcodepush\/cordova-code-push\/scripts\/binary-create-xcode\.sh\\"/,
     );
+  });
+
+  it('should keep the phase when cordova-ios writes the project it parsed before the hook, as a signed build does', () => {
+    // the locations cordova-ios's build parses the project at, under the platform's real path, as the CLI resolves it
+    const locations = {
+      pbxproj: realpathSync(projectFilePath),
+      root: realpathSync(platformRoot),
+    };
+    // prepare parses the project before the hook runs, and a signed build's signing step writes it back after
+    cordovaProjectFile.parse(locations);
+
+    addBinaryCreatePhaseToPlatform({
+      opts: { platforms: ['ios'], projectRoot },
+    });
+    const project = cordovaProjectFile.parse(locations);
+    project.xcode.updateBuildProperty('CODE_SIGN_STYLE', 'Manual');
+    project.write();
+
+    assert.equal(
+      readPhases(projectFilePath).at(-1).name,
+      'Create HotCodePush binary',
+    );
+  });
+
+  it('should append the phase to the project file, with a warning, when cordova-ios cannot be loaded from the platform', t => {
+    rmSync(join(projectRoot, 'node_modules'), { recursive: true });
+    const warn = t.mock.method(console, 'warn', () => {});
+
+    addBinaryCreatePhaseToPlatform({
+      opts: { platforms: ['ios'], projectRoot },
+    });
+
+    assert.equal(
+      readPhases(projectFilePath).at(-1).name,
+      'Create HotCodePush binary',
+    );
+    assert.equal(warn.mock.callCount(), 1);
   });
 
   it('should leave the project as it is when the phase is there', () => {
