@@ -8,3 +8,9 @@ node_modules
 DerivedData
 Package.resolved
 xcuserdata
+
+# Android
+tests/android/.gradle
+tests/android/.kotlin
+tests/android/build
+tests/android/local.properties

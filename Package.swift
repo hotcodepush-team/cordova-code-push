@@ -21,6 +21,10 @@ let package = Package(
                 .product(name: "Cordova", package: "cordova-ios"),
                 .product(name: "HotCodePushCore", package: "core-ios")
             ],
-            path: "src/ios")
+            path: "src/ios"),
+        .testTarget(
+            name: "HotCodePushCordovaTests",
+            dependencies: ["HotCodePushCordova"],
+            path: "tests/ios")
     ]
 )

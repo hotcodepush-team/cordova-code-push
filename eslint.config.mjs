@@ -12,6 +12,7 @@ export default defineConfig(
       'eslint.config.mjs',
       'src/android/**',
       'src/ios/**',
+      'tests/android/**',
     ],
   },
   js.configs.recommended,
@@ -49,7 +50,7 @@ export default defineConfig(
       '@typescript-eslint/consistent-type-imports': 'error',
       'import-x/no-extraneous-dependencies': [
         'error',
-        { devDependencies: ['**/*.test.ts', '**/*.config.*'] },
+        { devDependencies: ['**/*.test.mjs', '**/*.test.ts', '**/*.config.*'] },
       ],
       'import-x/order': ['error', { alphabetize: { order: 'asc' } }],
     },

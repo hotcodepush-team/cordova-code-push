@@ -1,0 +1,42 @@
+import groovy.json.JsonSlurper
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    id 'com.android.library' version '8.10.1'
+    id 'org.jetbrains.kotlin.android' version '2.2.20'
+}
+
+android {
+    namespace = 'com.hotcodepush.cordova'
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 24
+    }
+    // An app compiles the plugin at cordova-android's Java level.
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    sourceSets {
+        main.kotlin.srcDirs = ['../../src/android']
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+def cordovaAndroidVersion = new JsonSlurper().parse(file('../../package.json')).devDependencies['cordova-android']
+// The core at the commit the shipped Gradle reference pins, so a bump of the pin there reaches the tests.
+def coreAndroid = (file('../../src/android/hotcodepush.gradle').text =~ /com\.hotcodepush:core-android:[0-9a-f]{40}/)[0]
+
+dependencies {
+    implementation "org.apache.cordova:framework:$cordovaAndroidVersion"
+    implementation coreAndroid
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.17'
+}
