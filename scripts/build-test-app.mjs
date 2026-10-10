@@ -12,9 +12,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // The check that the plugin compiles and its build step lands: a fresh Cordova app in a temporary directory, the
-// platform at the version this repository pins or the one named, the plugin added from this checkout, both restored by
-// `cordova prepare` as on a fresh clone of the app, a debug build, and hotcodepush.json in the built app's www; a
-// stand-in for the CLI writes the file.
+// platform at the version this repository pins or the one named, the plugin added from this checkout, on iOS a signed
+// store build into that platform, both restored by `cordova prepare` as on a fresh clone of the app, a debug build, and
+// hotcodepush.json in each built app's www; a stand-in for the CLI writes the file.
 // Usage: node scripts/build-test-app.mjs android|ios [platform version]
 
 const APP_NAME = 'Verify';
@@ -85,6 +85,37 @@ function installCliStandIn() {
   });
 }
 
+/**
+ * A store build into the platform the plugin was just added to, signed as `build.json` asks: cordova-ios writes the
+ * signing style into the project it parsed before the hook added the phase. Xcode signs nothing and the build exports
+ * nothing, so the check needs no certificate.
+ */
+function buildIosStoreArchive() {
+  writeFileSync(
+    join(appDirectory, 'build.json'),
+    JSON.stringify({
+      ios: {
+        release: {
+          buildFlag: ['CODE_SIGNING_ALLOWED=NO'],
+          provisioningProfile: APP_NAME,
+        },
+      },
+    }),
+  );
+  run(['build', 'ios', '--device', '--release', '--noSign'], appDirectory);
+}
+
+function isResourceFileArchived() {
+  return existsSync(
+    join(
+      appDirectory,
+      'platforms/ios/App.xcarchive/Products/Applications',
+      `${APP_NAME}.app`,
+      'www/hotcodepush.json',
+    ),
+  );
+}
+
 function isResourceFileBuilt() {
   if (platform === 'ios') {
     return existsSync(
@@ -119,8 +150,15 @@ try {
     appDirectory,
   );
   run(['plugin', 'add', pluginDirectory], appDirectory);
-  restoreAsFreshClone();
   installCliStandIn();
+  if (platform === 'ios') {
+    buildIosStoreArchive();
+    if (!isResourceFileArchived()) {
+      console.error('The signed iOS store build has no www/hotcodepush.json.');
+      process.exitCode = 1;
+    }
+  }
+  restoreAsFreshClone();
   // `compile`, not `build`: a build prepares the platform again, which would hide a build step the restore missed.
   run(
     [

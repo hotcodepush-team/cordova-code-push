@@ -1,4 +1,4 @@
-const { readFileSync, writeFileSync } = require('node:fs');
+const { realpathSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const xcode = require('xcode');
 
@@ -32,31 +32,40 @@ module.exports = function addBinaryCreatePhaseToPlatform(context) {
   if (!context.opts.platforms.includes('ios')) {
     return;
   }
+  // cordova-ios keys the project it parses by the platform's real path, as the CLI resolves it
   addBinaryCreatePhase(
-    join(
-      context.opts.projectRoot,
-      'platforms',
-      'ios',
-      'App.xcodeproj',
-      'project.pbxproj',
-    ),
+    realpathSync(join(context.opts.projectRoot, 'platforms', 'ios')),
   );
 };
 
 /**
  * Appends the run-script phase to the app target after its last phase, once the app's www is copied into the app; the
- * phase already there is left alone, so the hook runs on every prepare.
+ * phase already there is left alone, so the hook runs on every prepare. The phase goes into the project cordova-ios
+ * parsed: it keeps that project for the whole CLI run and writes it back at a signed build's signing step, which would
+ * drop a phase written to the file alone.
  */
-function addBinaryCreatePhase(projectFilePath) {
-  if (readFileSync(projectFilePath, 'utf8').includes(PHASE_MARKER)) {
+function addBinaryCreatePhase(platformRoot) {
+  const locations = {
+    pbxproj: join(platformRoot, 'App.xcodeproj', 'project.pbxproj'),
+    root: platformRoot,
+  };
+  const cordovaProjectFile = requireCordovaProjectFile(platformRoot);
+  const project = cordovaProjectFile
+    ? cordovaProjectFile.parse(locations)
+    : parseProjectFile(locations.pbxproj);
+  if (hasBinaryCreatePhase(project.xcode)) {
     return;
   }
-  const project = xcode.project(projectFilePath).parseSync();
-  const { buildPhase } = project.addBuildPhase(
+  if (!cordovaProjectFile) {
+    console.warn(
+      'HotCodePush: cordova-ios cannot be loaded from platforms/ios, so the Xcode phase goes into the project file alone and a signed build in the same run may drop it; run cordova prepare before it.',
+    );
+  }
+  const { buildPhase } = project.xcode.addBuildPhase(
     [],
     'PBXShellScriptBuildPhase',
     PHASE_NAME,
-    project.findTargetKey(APP_TARGET_NAME),
+    project.xcode.findTargetKey(APP_TARGET_NAME),
     {
       inputPaths: [INFO_PLIST_INPUT_PATH],
       shellPath: '/bin/sh',
@@ -66,5 +75,38 @@ function addBinaryCreatePhase(projectFilePath) {
   // the CLI writes hotcodepush.json, which carries the build's time, on every build; a phase without outputs
   // that is not marked so makes Xcode warn
   buildPhase.alwaysOutOfDate = 1;
-  writeFileSync(projectFilePath, project.writeSync());
+  project.write();
+}
+
+/**
+ * cordova-ios's module that parses the project once per CLI run and writes it, resolved as the platform's Api.js
+ * resolves cordova-ios, so the hook shares the CLI's instance; undefined when it cannot be loaded.
+ */
+function requireCordovaProjectFile(platformRoot) {
+  try {
+    return require(
+      require.resolve('cordova-ios/lib/projectFile', {
+        paths: [join(platformRoot, 'cordova')],
+      }),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The project file parsed on its own, in the shape cordova-ios's parsed project has.
+ */
+function parseProjectFile(projectFilePath) {
+  const project = xcode.project(projectFilePath).parseSync();
+  return {
+    write: () => writeFileSync(projectFilePath, project.writeSync()),
+    xcode: project,
+  };
+}
+
+function hasBinaryCreatePhase(project) {
+  return Object.values(
+    project.hash.project.objects.PBXShellScriptBuildPhase ?? {},
+  ).some(phase => phase.shellScript?.includes(PHASE_MARKER));
 }
