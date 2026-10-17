@@ -190,12 +190,12 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     }
 
     private fun setRestartAllowed(options: JSONObject, callbackContext: CallbackContext) {
-        val allowed = options.opt("allowed") as? Boolean
-        if (allowed == null) {
-            callbackContext.error("allowed must be a boolean")
+        val isAllowed = options.opt("isAllowed") as? Boolean
+        if (isAllowed == null) {
+            callbackContext.error("isAllowed must be a boolean")
             return
         }
-        runVoid(callbackContext) { it.setRestartAllowed(allowed) }
+        runVoid(callbackContext) { it.setRestartAllowed(isAllowed) }
     }
 
     private fun showDebugScreen(callbackContext: CallbackContext) {
@@ -295,9 +295,9 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
     override fun updateFailed(event: UpdateFailedEvent) = notify("updateFailed", event.toJson())
 
-    override fun downloadProgress(releaseId: String, downloadedBytes: Long, totalBytes: Long) {
-        val progress = if (totalBytes > 0) downloadedBytes.toDouble() / totalBytes else 0.0
-        notify("downloadProgress", JSONObject().put("releaseId", releaseId).put("downloadedBytes", downloadedBytes).put("totalBytes", totalBytes).put("progress", progress))
+    override fun downloadProgress(releaseId: String, progressBytes: Long, downloadSizeBytes: Long) {
+        val progress = if (downloadSizeBytes > 0) progressBytes.toDouble() / downloadSizeBytes else 0.0
+        notify("downloadProgress", JSONObject().put("downloadSizeBytes", downloadSizeBytes).put("progress", progress).put("progressBytes", progressBytes).put("releaseId", releaseId))
     }
 
     override fun updateRolledBack(event: UpdateRolledBackEvent) = notify(RETAINED_EVENT_NAME, event.toJson())

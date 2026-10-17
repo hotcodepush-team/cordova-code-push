@@ -177,11 +177,11 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(setRestartAllowed:) func setRestartAllowed(_ command: CDVInvokedUrlCommand) {
-        guard let allowed = HotCodePushPlugin.options(of: command)["allowed"] as? Bool else {
-            reject(command, "allowed must be a boolean")
+        guard let isAllowed = HotCodePushPlugin.options(of: command)["isAllowed"] as? Bool else {
+            reject(command, "isAllowed must be a boolean")
             return
         }
-        runVoid(command) { core in await core.setRestartAllowed(allowed) }
+        runVoid(command) { core in await core.setRestartAllowed(isAllowed) }
     }
 
     @objc(showDebugScreen:) func showDebugScreen(_ command: CDVInvokedUrlCommand) {
@@ -325,9 +325,9 @@ extension HotCodePushPlugin: CoreListener {
         notify("updateFailed", event)
     }
 
-    public func downloadProgress(releaseId: String, downloadedBytes: Int, totalBytes: Int) {
-        let progress = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 0
-        send(event: ["eventName": "downloadProgress", "data": ["releaseId": releaseId, "downloadedBytes": downloadedBytes, "totalBytes": totalBytes, "progress": progress]])
+    public func downloadProgress(releaseId: String, progressBytes: Int, downloadSizeBytes: Int) {
+        let progress = downloadSizeBytes > 0 ? Double(progressBytes) / Double(downloadSizeBytes) : 0
+        send(event: ["eventName": "downloadProgress", "data": ["downloadSizeBytes": downloadSizeBytes, "progress": progress, "progressBytes": progressBytes, "releaseId": releaseId]])
     }
 
     public func updateRolledBack(_ event: UpdateRolledBackEvent) {

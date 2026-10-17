@@ -58,11 +58,11 @@ const OPTIONS_SHAPES = {
         (typeof options.id === 'string' || typeof options.name === 'string')),
   },
   setRestartAllowed: {
-    description: '{ allowed: boolean }',
+    description: '{ isAllowed: boolean }',
     matches: (options: unknown) =>
       isRecord(options) &&
       Object.keys(options).length === 1 &&
-      typeof options.allowed === 'boolean',
+      typeof options.isAllowed === 'boolean',
   },
   sync: {
     description:

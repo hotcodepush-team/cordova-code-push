@@ -11,7 +11,7 @@ import { ModuleKind, ScriptTarget, transpileModule } from 'typescript';
 const SERVICE = 'HotCodePush';
 
 const UPDATE_ROLLED_BACK_EVENT = {
-  from: {
+  fromRelease: {
     bundleId: '0f8fad5b-d9cb-469f-a165-70867728950e',
     bundleVersion: '1.4.2',
     id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -19,7 +19,7 @@ const UPDATE_ROLLED_BACK_EVENT = {
     number: 43,
   },
   reason: 'APP_REQUESTED',
-  to: null,
+  toRelease: null,
 };
 
 // The module as Cordova runs it: compiled to CommonJS and called as the factory `cordova.define` wraps a plugin's
@@ -60,8 +60,8 @@ const WRONG_OPTIONS = [
   ['setChannel', { channel: 'beta' }],
   ['setRestartAllowed', undefined],
   ['setRestartAllowed', {}],
-  ['setRestartAllowed', { allowed: 'true' }],
-  ['setRestartAllowed', { allowed: true, isHeld: false }],
+  ['setRestartAllowed', { isAllowed: 'true' }],
+  ['setRestartAllowed', { isAllowed: true, isHeld: false }],
   ['sync', null],
   ['sync', { checkStrategy: 'manual' }],
   ['sync', { applyStrategy: 2 }],
@@ -92,7 +92,7 @@ const ACCEPTED_OPTIONS = [
   ],
   ['setChannel', { name: 'beta' }, { name: 'beta' }],
   ['setChannel', null, {}],
-  ['setRestartAllowed', { allowed: false }, { allowed: false }],
+  ['setRestartAllowed', { isAllowed: false }, { isAllowed: false }],
   ['sync', undefined, {}],
   ['sync', { downloadStrategy: 'manual' }, { downloadStrategy: 'manual' }],
 ];

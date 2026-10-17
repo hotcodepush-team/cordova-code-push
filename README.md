@@ -26,7 +26,7 @@ document.addEventListener('deviceready', async () => {
   const result = await HotCodePush.sync();
   if (result.status === 'DOWNLOADED') {
     console.log(
-      `release #${result.release.number} applies at ${result.applyAt}`,
+      `release #${result.release.number} applies at ${result.applyStrategy}`,
     );
   }
 });
