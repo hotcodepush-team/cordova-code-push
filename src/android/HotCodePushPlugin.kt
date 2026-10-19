@@ -1,12 +1,8 @@
 package com.hotcodepush.cordova
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import com.hotcodepush.core.ApplyStrategy
 import com.hotcodepush.core.ChannelChoice
 import com.hotcodepush.core.Clock
@@ -15,15 +11,15 @@ import com.hotcodepush.core.Core
 import com.hotcodepush.core.CoreListener
 import com.hotcodepush.core.DebugScreen
 import com.hotcodepush.core.DeviceFacts
+import com.hotcodepush.core.DownloadProgressEvent
 import com.hotcodepush.core.DownloadStrategy
 import com.hotcodepush.core.DownloadUpdateOptions
 import com.hotcodepush.core.FileStore
-import com.hotcodepush.core.KeyValueStore
+import com.hotcodepush.core.HandlerScheduler
 import com.hotcodepush.core.MandatoryApplyStrategy
 import com.hotcodepush.core.OkHttpClientAdapter
 import com.hotcodepush.core.PlainException
-import com.hotcodepush.core.ScheduledTask
-import com.hotcodepush.core.Scheduler
+import com.hotcodepush.core.SharedPreferencesStore
 import com.hotcodepush.core.SyncOptions
 import com.hotcodepush.core.SyncTrigger
 import com.hotcodepush.core.UpdateAvailableEvent
@@ -296,10 +292,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
     override fun updateFailed(event: UpdateFailedEvent) = notify("updateFailed", event.toJson())
 
-    override fun downloadProgress(releaseId: String, progressBytes: Long, downloadSizeBytes: Long) {
-        val progress = if (downloadSizeBytes > 0) progressBytes.toDouble() / downloadSizeBytes else 0.0
-        notify("downloadProgress", JSONObject().put("downloadSizeBytes", downloadSizeBytes).put("progress", progress).put("progressBytes", progressBytes).put("releaseId", releaseId))
-    }
+    override fun downloadProgress(event: DownloadProgressEvent) = notify("downloadProgress", event.toJson())
 
     override fun updateRolledBack(event: UpdateRolledBackEvent) = notify(RETAINED_EVENT_NAME, event.toJson())
 
@@ -345,32 +338,4 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
         private fun JSONObject.optStringOrNull(name: String): String? = if (isNull(name)) null else opt(name) as? String
     }
-}
-
-/** Every write commits before it returns: `apply()` reaches the disk about 100 ms later, and a crash in that window would lose the state the next start rolls back from. */
-@SuppressLint("ApplySharedPref")
-class SharedPreferencesStore(private val preferences: SharedPreferences) : KeyValueStore {
-    override fun getString(key: String): String? = preferences.getString(key, null)
-
-    override fun putString(key: String, value: String?) {
-        preferences.edit().apply { if (value == null) remove(key) else putString(key, value) }.commit()
-    }
-
-    override fun getInt(key: String): Int? = if (preferences.contains(key)) runCatching { preferences.getInt(key, 0) }.getOrNull() else null
-
-    override fun putInt(key: String, value: Int?) {
-        preferences.edit().apply { if (value == null) remove(key) else putInt(key, value) }.commit()
-    }
-}
-
-class HandlerScheduler : Scheduler {
-    private val handler = Handler(Looper.getMainLooper())
-
-    override fun schedule(afterSeconds: Double, block: () -> Unit): ScheduledTask {
-        val runnable = Runnable(block)
-        handler.postDelayed(runnable, (afterSeconds * 1000).toLong())
-        return ScheduledTask { handler.removeCallbacks(runnable) }
-    }
-
-    fun cancelAll() = handler.removeCallbacksAndMessages(null)
 }

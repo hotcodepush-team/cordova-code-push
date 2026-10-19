@@ -323,9 +323,8 @@ extension HotCodePushPlugin: CoreListener {
         notify("updateFailed", event)
     }
 
-    public func downloadProgress(releaseId: String, progressBytes: Int, downloadSizeBytes: Int) {
-        let progress = downloadSizeBytes > 0 ? Double(progressBytes) / Double(downloadSizeBytes) : 0
-        send(event: ["eventName": "downloadProgress", "data": ["downloadSizeBytes": downloadSizeBytes, "progress": progress, "progressBytes": progressBytes, "releaseId": releaseId]])
+    public func downloadProgress(_ event: DownloadProgressEvent) {
+        notify("downloadProgress", event)
     }
 
     public func updateRolledBack(_ event: UpdateRolledBackEvent) {

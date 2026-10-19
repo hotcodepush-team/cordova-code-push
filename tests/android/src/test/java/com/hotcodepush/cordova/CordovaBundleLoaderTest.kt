@@ -2,6 +2,7 @@ package com.hotcodepush.cordova
 
 import android.content.Context
 import android.webkit.WebResourceResponse
+import com.hotcodepush.core.SharedPreferencesStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

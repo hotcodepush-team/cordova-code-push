@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.hotcodepush:core-android:a71a1ca4d5097105b9a9aaff43e477ca4b8d54eb'
+    implementation 'com.hotcodepush:core-android:a59e912802a83f2c8302fcc14797c713a192d030'
     implementation "androidx.webkit:webkit:${cordovaConfig.ANDROIDX_WEBKIT_VERSION}"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 }
