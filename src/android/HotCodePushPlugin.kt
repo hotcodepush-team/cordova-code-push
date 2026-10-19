@@ -1,11 +1,8 @@
 package com.hotcodepush.cordova
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.os.Build
 import com.hotcodepush.core.ApplyStrategy
+import com.hotcodepush.core.AssetsEmbeddedBundle
 import com.hotcodepush.core.ChannelChoice
-import com.hotcodepush.core.Clock
 import com.hotcodepush.core.Configuration
 import com.hotcodepush.core.Core
 import com.hotcodepush.core.CoreListener
@@ -14,10 +11,8 @@ import com.hotcodepush.core.DeviceFacts
 import com.hotcodepush.core.DownloadProgressEvent
 import com.hotcodepush.core.DownloadStrategy
 import com.hotcodepush.core.DownloadUpdateOptions
-import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.HandlerScheduler
 import com.hotcodepush.core.MandatoryApplyStrategy
-import com.hotcodepush.core.OkHttpClientAdapter
 import com.hotcodepush.core.PlainException
 import com.hotcodepush.core.SharedPreferencesStore
 import com.hotcodepush.core.SyncOptions
@@ -39,8 +34,6 @@ import org.apache.cordova.LOG
 import org.apache.cordova.PluginResult
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
-import java.io.IOException
 
 /** The Cordova bridge over the shared core: every action is one call into the core, every answer one JSON object. */
 class HotCodePushPlugin : CordovaPlugin(), CoreListener {
@@ -50,7 +43,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private var loader: CordovaBundleLoader? = null
 
     /** What every call rejects with while there is no core: the app loads from `file://`, the resource file is missing, or the core's reader refused it. */
-    private var notConfiguredMessage = MISSING_RESOURCE_FILE_MESSAGE
+    private var notConfiguredMessage = Configuration.MISSING_MESSAGE
     private var retainedEvent: JSONObject? = null
     private val pathHandler = CordovaPluginPathHandler { path -> loader?.handleRequest(path) }
     private val scheduler = HandlerScheduler()
@@ -64,33 +57,26 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             return
         }
         val context = cordova.context
-        val resourceFile = readResourceFile(context)
-        if (resourceFile == null) {
-            LOG.e(TAG, notConfiguredMessage)
-            return
-        }
         val configuration = try {
-            Configuration.decode(resourceFile)
+            Configuration.read(context, "${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json")
         } catch (exception: Exception) {
-            notConfiguredMessage = "HotCodePush is not configured: the app's hotcodepush.json was refused: ${exception.message}. Check the project's hotcodepush.json and build the app again."
+            notConfiguredMessage = Configuration.resolveRefusedMessage(exception)
+            null
+        }
+        if (configuration == null) {
             LOG.e(TAG, notConfiguredMessage)
             return
         }
-        val store = SharedPreferencesStore(context.getSharedPreferences(defaultPreferencesName(context), Context.MODE_PRIVATE))
-        val loader = CordovaBundleLoader(context, store, ::reloadStartPage)
+        val loader = CordovaBundleLoader(context, SharedPreferencesStore(context), ::reloadStartPage)
         val core = Core(
+            context = context,
             configuration = configuration,
-            device = deviceFacts(context),
-            store = store,
-            files = FileStore(File(context.filesDir, "hotcodepush")),
-            embedded = AssetsEmbeddedBundle(context, configuration.embeddedBundleManifest),
-            http = OkHttpClientAdapter(),
+            device = DeviceFacts.current(context, SDK_VERSION),
+            embedded = AssetsEmbeddedBundle(context, configuration.embeddedBundleManifest, CordovaBundleLoader.EMBEDDED_ASSET_PATH),
             loader = loader,
             listener = this,
-            scheduler = scheduler,
-            clock = Clock { System.currentTimeMillis() },
             scope = scope,
-            temporaryDirectory = File(context.cacheDir, "hotcodepush"),
+            scheduler = scheduler,
         )
         this.core = core
         this.loader = loader
@@ -284,31 +270,8 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     companion object {
         private const val INSECURE_FILE_MODE_PREFERENCE = "AndroidInsecureFileModeEnabled"
         private const val INSECURE_FILE_MODE_MESSAGE = "HotCodePush is off: the $INSECURE_FILE_MODE_PREFERENCE preference loads the app from file://, where no update can be served. Remove the preference from config.xml to take updates."
-        private const val MISSING_RESOURCE_FILE_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
         private const val RETAINED_EVENT_NAME = "updateRolledBack"
         private const val TAG = "HotCodePush"
-
-        /** The default `SharedPreferences`, the file `PreferenceManager.getDefaultSharedPreferences` names, without the dependency. */
-        private fun defaultPreferencesName(context: Context) = "${context.packageName}_preferences"
-
-        private fun readResourceFile(context: Context): String? = try {
-            context.assets.open("${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json").bufferedReader().use { it.readText() }
-        } catch (exception: IOException) {
-            null
-        }
-
-        private fun deviceFacts(context: Context): DeviceFacts {
-            val info = context.packageManager.getPackageInfo(context.packageName, 0)
-            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode else @Suppress("DEPRECATION") info.versionCode.toLong()
-            return DeviceFacts(
-                platform = "android",
-                binaryVersion = info.versionName ?: "",
-                binaryBuild = versionCode.toString(),
-                osVersion = Build.VERSION.RELEASE ?: "",
-                sdkVersion = SDK_VERSION,
-                isDebugBuild = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
-            )
-        }
 
         private fun JSONObject.optStringOrNull(name: String): String? = if (isNull(name)) null else opt(name) as? String
     }

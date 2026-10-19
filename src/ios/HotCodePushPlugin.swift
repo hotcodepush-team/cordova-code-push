@@ -1,13 +1,11 @@
 import Cordova
 import Foundation
 import HotCodePushCore
-import UIKit
 import WebKit
 
 /// The Cordova bridge over the shared core: every action is one call into the core, every answer one JSON object.
 @objc(HotCodePushPlugin)
 public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
-    private static let missingResourceFileMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
     private static let retainedEventName = "updateRolledBack"
 
     private let responder = ServedFileResponder()
@@ -15,40 +13,34 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     private var eventCallbackId: String?
     private var loader: CordovaBundleLoader?
     /// What every call rejects with while there is no core: the resource file is missing, or the core's reader refused it.
-    private var notConfiguredMessage = HotCodePushPlugin.missingResourceFileMessage
+    private var notConfiguredMessage = Configuration.missingMessage
     private var retainedEvent: [String: Any]?
 
     /// Cordova calls it in `viewDidLoad` and loads the start page right after, so the start decides first which bundle that page comes from.
     override public func pluginInitialize() {
-        guard let resourceFile = HotCodePushPlugin.readResourceFile() else {
-            NSLog("[HotCodePush] %@", notConfiguredMessage)
-            return
-        }
-        let configuration: Configuration
+        let configuration: Configuration?
         do {
-            configuration = try Configuration.decode(resourceFile)
+            configuration = try Configuration.read(subdirectory: CordovaBundleLoader.embeddedDirectoryName)
         } catch {
-            notConfiguredMessage = HotCodePushPlugin.resolveRefusedMessage(error)
+            notConfiguredMessage = Configuration.resolveRefusedMessage(error)
+            configuration = nil
+        }
+        guard let configuration = configuration else {
             NSLog("[HotCodePush] %@", notConfiguredMessage)
             return
         }
-        let store = UserDefaultsStore()
-        let loader = CordovaBundleLoader(store: store, startPage: viewController?.startPage ?? "index.html") { [weak self] in
+        let loader = CordovaBundleLoader(store: UserDefaultsStore(), startPage: viewController?.startPage ?? "index.html") { [weak self] in
             self?.reloadStartPage()
         }
         let core = Core(
             configuration: configuration,
-            device: HotCodePushPlugin.deviceFacts(),
-            store: store,
-            files: FileStore(rootDirectory: CordovaBundleLoader.storeDirectory),
-            embedded: AppBundleEmbeddedBundle(manifest: configuration.embeddedBundleManifest),
-            http: UrlSessionHttpClient(),
+            device: DeviceFacts.current(sdkVersion: sdkVersion),
+            embedded: AppBundleEmbeddedBundle(manifest: configuration.embeddedBundleManifest, rootDirectory: CordovaBundleLoader.embeddedDirectory),
             loader: loader,
             listener: self)
         self.loader = loader
         self.core = core
-        NotificationCenter.default.addObserver(self, selector: #selector(handleDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        core.observeAppLifecycle()
         loader.beginServing(bundleId: core.handleAppStartBlocking())
     }
 
@@ -64,14 +56,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     private func reloadStartPage() {
         eventCallbackId = nil
         viewController?.loadStartPage()
-    }
-
-    @objc private func handleDidEnterBackground() {
-        Task { await core?.handleAppPause() }
-    }
-
-    @objc private func handleWillEnterForeground() {
-        Task { await core?.handleAppResume() }
     }
 
     // MARK: The served bundle
@@ -92,11 +76,11 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     // MARK: Actions
 
     @objc(applyUpdate:) func applyUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.applyUpdate()) }
+        run(command) { core in try Json.encodeObject(await core.applyUpdate()) }
     }
 
     @objc(checkForUpdate:) func checkForUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.checkForUpdate()) }
+        run(command) { core in try Json.encodeObject(await core.checkForUpdate()) }
     }
 
     @objc(clearUpdates:) func clearUpdates(_ command: CDVInvokedUrlCommand) {
@@ -107,19 +91,19 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(downloadUpdate:) func downloadUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.downloadUpdate(options: HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command)))) }
+        run(command) { core in try Json.encodeObject(await core.downloadUpdate(options: HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command)))) }
     }
 
     @objc(getChannel:) func getChannel(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.channel()) }
+        run(command) { core in try Json.encodeObject(await core.channel()) }
     }
 
     @objc(getDevice:) func getDevice(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.deviceResult()) }
+        run(command) { core in try Json.encodeObject(await core.deviceResult()) }
     }
 
     @objc(getState:) func getState(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.getState()) }
+        run(command) { core in try Json.encodeObject(await core.getState()) }
     }
 
     /// The one callback the web layer registers for the life of the page; every event is answered on it.
@@ -132,7 +116,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(notifyReady:) func notifyReady(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.notifyReady()) }
+        run(command) { core in try Json.encodeObject(await core.notifyReady()) }
     }
 
     @objc(notifyRendered:) func notifyRendered(_ command: CDVInvokedUrlCommand) {
@@ -204,7 +188,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(sync:) func sync(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try HotCodePushPlugin.jsonObject(await core.sync(trigger: .manual, options: HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command)))) }
+        run(command) { core in try Json.encodeObject(await core.sync(trigger: .manual, options: HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command)))) }
     }
 
     // MARK: The bridge
@@ -255,50 +239,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         commandDelegate.send(CDVPluginResult(status: .error, messageAs: message), callbackId: command.callbackId)
     }
 
-    private static func jsonObject<T: Encodable>(_ value: T) throws -> [String: Any] {
-        let data = try Json.encoder.encode(value)
-        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw PlainError("The result could not be encoded")
-        }
-        return object
-    }
-
-    // MARK: The platform's facts
-
-    private static func readResourceFile() -> Data? {
-        guard let url = Bundle.main.url(forResource: "hotcodepush", withExtension: "json", subdirectory: CordovaBundleLoader.embeddedDirectoryName) else {
-            return nil
-        }
-        return try? Data(contentsOf: url)
-    }
-
-    /// A resource file the core's reader threw on, in the reader's words: a decoding error says which field broke which rule.
-    private static func resolveRefusedMessage(_ error: Error) -> String {
-        let reason: String
-        switch error as? DecodingError {
-        case .dataCorrupted(let context)?, .keyNotFound(_, let context)?, .typeMismatch(_, let context)?, .valueNotFound(_, let context)?:
-            reason = context.debugDescription
-        default:
-            reason = String(describing: error)
-        }
-        return "HotCodePush is not configured: the app's hotcodepush.json was refused: \(reason). Check the project's hotcodepush.json and build the app again."
-    }
-
-    private static func deviceFacts() -> DeviceFacts {
-        let info = Bundle.main.infoDictionary ?? [:]
-        #if DEBUG
-        let isDebugBuild = true
-        #else
-        let isDebugBuild = false
-        #endif
-        return DeviceFacts(
-            platform: "ios",
-            binaryVersion: info["CFBundleShortVersionString"] as? String ?? "",
-            binaryBuild: info["CFBundleVersion"] as? String ?? "",
-            osVersion: UIDevice.current.systemVersion,
-            sdkVersion: sdkVersion,
-            isDebugBuild: isDebugBuild)
-    }
 }
 
 extension HotCodePushPlugin: CoreListener {
@@ -323,7 +263,7 @@ extension HotCodePushPlugin: CoreListener {
     }
 
     private func notify<T: Encodable>(_ eventName: String, _ event: T) {
-        guard let data = try? HotCodePushPlugin.jsonObject(event) else { return }
+        guard let data = try? Json.encodeObject(event) else { return }
         send(event: ["eventName": eventName, "data": data])
     }
 

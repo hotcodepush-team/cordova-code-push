@@ -1,14 +1,12 @@
 package com.hotcodepush.cordova
 
 import android.content.Context
-import android.net.ConnectivityManager
 import android.webkit.MimeTypeMap
 import android.webkit.WebResourceResponse
 import com.hotcodepush.core.BundleLoader
-import com.hotcodepush.core.EmbeddedBundle
-import com.hotcodepush.core.EmbeddedBundleManifest
+import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.KeyValueStore
-import com.hotcodepush.core.PlainException
+import com.hotcodepush.core.NetworkMonitor
 import java.io.File
 
 /**
@@ -17,12 +15,13 @@ import java.io.File
  * Until the start has decided, nothing is served and nothing reloads: the bundle the core loads is only recorded.
  */
 class CordovaBundleLoader(
-    private val context: Context,
+    context: Context,
     /** The core's own store, so the bundle to serve at the next start lies beside the state it belongs to. */
     private val store: KeyValueStore,
     private val reloadStartPage: () -> Unit,
 ) : BundleLoader {
-    private val projectionsDirectory = File(File(context.filesDir, "hotcodepush"), "www")
+    private val networkMonitor = NetworkMonitor(context)
+    private val projectionsDirectory = File(FileStore.defaultRootDirectory(context), "www")
 
     @Volatile
     private var runningBundleId: String? = null
@@ -63,8 +62,7 @@ class CordovaBundleLoader(
     @Synchronized
     override fun servedBundleId(): String? = if (isServing) runningBundleId else persistedBundleId()
 
-    override fun isConnectionMetered(): Boolean =
-        (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: false
+    override fun isConnectionMetered(): Boolean = networkMonitor.isConnectionMetered()
 
     /**
      * The answer to a request for the app's own path while a bundle runs; `null` leaves the request to Cordova,
@@ -102,20 +100,5 @@ class CordovaBundleLoader(
         private const val FRAMEWORK_PLUGINS_PREFIX = "plugins/"
         private const val SERVED_BUNDLE_KEY = "hotcodepush.cordova.servedBundleId"
         private const val START_PAGE = "index.html"
-    }
-}
-
-/** The files compiled into the binary, `assets/www/` in the APK, addressed by the embedded manifest's hashes. */
-class AssetsEmbeddedBundle(private val context: Context, manifest: EmbeddedBundleManifest?) : EmbeddedBundle {
-    private val pathsBySha256 = manifest?.files.orEmpty().associate { it.sha256 to it.path }
-
-    override fun has(sha256: String): Boolean {
-        val path = pathsBySha256[sha256] ?: return false
-        return runCatching { context.assets.open("${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/$path").close(); true }.getOrDefault(false)
-    }
-
-    override fun copyFile(sha256: String, destination: File) {
-        val path = pathsBySha256[sha256] ?: throw PlainException("No embedded file with hash $sha256")
-        context.assets.open("${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/$path").use { input -> destination.outputStream().use { input.copyTo(it) } }
     }
 }

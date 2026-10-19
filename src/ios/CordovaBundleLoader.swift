@@ -1,17 +1,12 @@
 import Foundation
 import HotCodePushCore
-import Network
 
 /// Cordova serves the app from `www` in the binary through its scheme handler; the plugin answers that handler first,
 /// so a bundle laid out by path under the store is served in its place, on the same origin.
 /// Until the start has decided, nothing is served and nothing reloads: the bundle the core loads is only recorded.
 final class CordovaBundleLoader: BundleLoader {
     static let embeddedDirectoryName = "www"
-
-    static var storeDirectory: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return support.appendingPathComponent("hotcodepush", isDirectory: true)
-    }
+    static let embeddedDirectory = Bundle.main.bundleURL.appendingPathComponent(embeddedDirectoryName, isDirectory: true)
 
     /// What `cordova prepare` adds to the app's own files: the bridge of the binary's plugins, never a bundle's.
     private static let frameworkFilePaths: Set<String> = ["/cordova.js", "/cordova_plugins.js"]
@@ -19,11 +14,10 @@ final class CordovaBundleLoader: BundleLoader {
     private static let persistedBundleKey = "hotcodepush.cordova.servedBundleId"
 
     private let lock = NSLock()
-    private let monitor = NWPathMonitor()
+    private let networkMonitor = NetworkMonitor()
     private let reloadStartPage: () -> Void
     private let startPage: String
     private let store: KeyValueStore
-    private var isMetered = false
     private var isServing = false
     private var runningBundleId: String?
 
@@ -33,10 +27,6 @@ final class CordovaBundleLoader: BundleLoader {
         self.store = store
         self.startPage = startPage
         self.reloadStartPage = reloadStartPage
-        monitor.pathUpdateHandler = { [weak self] path in
-            self?.setIsMetered(path.isExpensive || path.isConstrained)
-        }
-        monitor.start(queue: DispatchQueue.global(qos: .utility))
     }
 
     /// The start has decided: the page Cordova loads next is served from this bundle, `nil` for the embedded one,
@@ -49,7 +39,7 @@ final class CordovaBundleLoader: BundleLoader {
     }
 
     func projectionDirectory(bundleId: String) -> URL {
-        return CordovaBundleLoader.storeDirectory.appendingPathComponent("www", isDirectory: true).appendingPathComponent(bundleId, isDirectory: true)
+        return FileStore.defaultRootDirectory.appendingPathComponent("www", isDirectory: true).appendingPathComponent(bundleId, isDirectory: true)
     }
 
     func deleteProjection(bundleId: String) {
@@ -81,9 +71,7 @@ final class CordovaBundleLoader: BundleLoader {
     }
 
     func isConnectionMetered() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return isMetered
+        return networkMonitor.isConnectionMetered()
     }
 
     /// The file a request for the app's own path is answered with while a bundle runs; `nil` leaves the request to Cordova,
@@ -119,12 +107,6 @@ final class CordovaBundleLoader: BundleLoader {
         return runningBundleId
     }
 
-    private func setIsMetered(_ isMetered: Bool) {
-        lock.lock()
-        defer { lock.unlock() }
-        self.isMetered = isMetered
-    }
-
     private func setRunningBundleId(_ bundleId: String?) {
         lock.lock()
         defer { lock.unlock() }
@@ -136,28 +118,4 @@ final class CordovaBundleLoader: BundleLoader {
 enum ServedFile {
     case file(URL)
     case missing
-}
-
-/// The files compiled into the binary, `www/` in the app bundle, addressed by the embedded manifest's hashes.
-final class AppBundleEmbeddedBundle: EmbeddedBundle {
-    private let pathsBySha256: [String: String]
-    private let embeddedDirectory = Bundle.main.bundleURL.appendingPathComponent(CordovaBundleLoader.embeddedDirectoryName, isDirectory: true)
-
-    init(manifest: EmbeddedBundleManifest?) {
-        var paths: [String: String] = [:]
-        for file in manifest?.files ?? [] {
-            paths[file.sha256] = file.path
-        }
-        pathsBySha256 = paths
-    }
-
-    func has(sha256: String) -> Bool {
-        guard let path = pathsBySha256[sha256] else { return false }
-        return FileManager.default.fileExists(atPath: embeddedDirectory.appendingPathComponent(path).path)
-    }
-
-    func copyFile(sha256: String, to destination: URL) throws {
-        guard let path = pathsBySha256[sha256] else { throw PlainError("No embedded file with hash \(sha256)") }
-        try FileManager.default.copyItem(at: embeddedDirectory.appendingPathComponent(path), to: destination)
-    }
 }

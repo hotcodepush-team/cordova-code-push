@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     id="@hotcodepush/cordova-code-push"
     version="0.0.0">
     <name>HotCodePush</name>
@@ -31,9 +30,6 @@
             <!-- The bridge and the core are Kotlin: the project's Kotlin plugin is on, at the version the core is compiled with. -->
             <preference name="GradlePluginKotlinEnabled" value="true" />
             <preference name="GradlePluginKotlinVersion" value="2.2.20" />
-        </config-file>
-        <config-file target="AndroidManifest.xml" parent="/manifest">
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         </config-file>
         <!-- The core and the build step, a Gradle task per variant. -->
         <framework src="src/android/hotcodepush.gradle" custom="true" type="gradleReference" />
