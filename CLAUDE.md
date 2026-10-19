@@ -31,14 +31,14 @@ The plugin layer keeps the bundle loader, the readiness signal and the bridge, n
 
 ## Commands
 
-| Command                                | Does                                                                 |
-| -------------------------------------- | -------------------------------------------------------------------- |
-| `npm run lint`                         | ESLint, Prettier and SwiftLint                                       |
-| `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names                |
-| `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform              |
-| `npm test`                             | the module, the hook and the script; the script's tests run on macOS |
-| `npm run test:android`                 | the Kotlin's Robolectric tests, in `tests/android`                   |
-| `npm run test:ios`                     | the Swift tests on Mac Catalyst, in `tests/ios`                      |
+| Command                                | Does                                                                                                                                                                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`                         | ESLint, Prettier and SwiftLint                                                                                                                                                                                              |
+| `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names; writes the SDK version from `package.json` into `SdkVersion.swift` and `SdkVersion.kt`, both ignored, so a fresh checkout runs it before opening the native projects |
+| `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform                                                                                                                                                                     |
+| `npm test`                             | the module, the hook and the script; the script's tests run on macOS                                                                                                                                                        |
+| `npm run test:android`                 | the Kotlin's Robolectric tests, in `tests/android`                                                                                                                                                                          |
+| `npm run test:ios`                     | the Swift tests on Mac Catalyst, in `tests/ios`                                                                                                                                                                             |
 
 Run `npm run fmt` before every commit.
 The package is CommonJS on purpose: Cordova `require`s a plugin's hook script, so the tooling's own modules are `.mjs`.
