@@ -22,7 +22,7 @@ scripts/binary-create-xcode.sh      what the phase runs, with the Node lookup; `
 scripts/*.test.mjs                  their tests on node --test
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
-tests/android          the Kotlin of src/android built on its own over cordova-android's framework, with its Robolectric tests of the loader's path guards
+tests/android          the Kotlin of src/android built on its own over cordova-android's framework, with its Robolectric tests of the loader's path guards and of the plugin's calls over a mocked core
 tests/ios              the XCTest target over the loader and the scheme-task responder, run on Mac Catalyst under the shared scheme in .swiftpm
 ```
 
