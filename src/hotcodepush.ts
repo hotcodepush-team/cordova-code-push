@@ -9,14 +9,6 @@ interface NativeEvent {
   eventName: HotCodePushEventName;
 }
 
-/**
- * The events held until the web layer listens: a rollback is reported by the start that follows it,
- * before the reloaded app has added its listener.
- */
-const RETAINED_EVENT_NAMES: ReadonlySet<HotCodePushEventName> = new Set([
-  'updateRolledBack',
-]);
-
 const SERVICE = 'HotCodePush';
 
 /**
@@ -77,7 +69,11 @@ const OPTIONS_SHAPES = {
 
 const listenersByEventName = new Map<HotCodePushEventName, Set<Listener>>();
 
-const retainedEventsByName = new Map<HotCodePushEventName, unknown>();
+/**
+ * The rollback held until the web layer listens: it is reported by the start that follows it, before the reloaded app
+ * has added its listener.
+ */
+let retainedUpdateRolledBack: unknown;
 
 /**
  * The plugin as Cordova clobbers it onto `window.HotCodePush`: every method is one call into the native core.
@@ -87,9 +83,12 @@ const hotCodePush: HotCodePushPlugin = {
     const listeners = listenersByEventName.get(eventName) ?? new Set();
     listeners.add(listener as Listener);
     listenersByEventName.set(eventName, listeners);
-    if (retainedEventsByName.has(eventName)) {
-      (listener as Listener)(retainedEventsByName.get(eventName));
-      retainedEventsByName.delete(eventName);
+    if (
+      eventName === 'updateRolledBack' &&
+      retainedUpdateRolledBack !== undefined
+    ) {
+      (listener as Listener)(retainedUpdateRolledBack);
+      retainedUpdateRolledBack = undefined;
     }
     return Promise.resolve({
       remove: () => {
@@ -163,8 +162,8 @@ function isRecordOfOptionalStrings(
 function dispatchNativeEvent({ data, eventName }: NativeEvent): void {
   const listeners = listenersByEventName.get(eventName);
   if (listeners === undefined || listeners.size === 0) {
-    if (RETAINED_EVENT_NAMES.has(eventName)) {
-      retainedEventsByName.set(eventName, data);
+    if (eventName === 'updateRolledBack') {
+      retainedUpdateRolledBack = data;
     }
     return;
   }
