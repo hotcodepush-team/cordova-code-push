@@ -53,6 +53,18 @@ class HotCodePushPluginTest {
         }
     }
 
+    @Test
+    fun shouldRejectTheCallWithTheFileModeMessageWhenTheAppLoadsFromFile() {
+        plugin.privateInitialize("HotCodePush", mock(CordovaInterface::class.java), null, CordovaPreferences().apply { set("AndroidInsecureFileModeEnabled", true) })
+        val callbackContext = mock(CallbackContext::class.java)
+
+        plugin.execute("getState", JSONArray(), callbackContext)
+
+        verify(callbackContext).error(
+            "HotCodePush is off: the AndroidInsecureFileModeEnabled preference loads the app from file://, where no update can be served. Remove the preference from config.xml to take updates.",
+        )
+    }
+
     /** The plugin as Cordova initializes it in an app whose assets hold a valid resource file. */
     private fun initializePlugin() {
         val context = contextWithResourceFile()

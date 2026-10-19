@@ -49,7 +49,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private var hasPaused = false
     private var loader: CordovaBundleLoader? = null
 
-    /** What every call rejects with while there is no core: the resource file is missing, or the core's reader refused it. */
+    /** What every call rejects with while there is no core: the app loads from `file://`, the resource file is missing, or the core's reader refused it. */
     private var notConfiguredMessage = MISSING_RESOURCE_FILE_MESSAGE
     private var retainedEvent: JSONObject? = null
     private val pathHandler = CordovaPluginPathHandler { path -> loader?.handleRequest(path) }
@@ -59,7 +59,8 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     /** Cordova loads the start page right after the plugins initialize, so the start decides first which bundle that page comes from. */
     override fun pluginInitialize() {
         if (isInsecureFileModeEnabled()) {
-            LOG.e(TAG, INSECURE_FILE_MODE_MESSAGE)
+            notConfiguredMessage = INSECURE_FILE_MODE_MESSAGE
+            LOG.e(TAG, notConfiguredMessage)
             return
         }
         val context = cordova.context
@@ -197,7 +198,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private fun showDebugScreen(callbackContext: CallbackContext) {
         val core = core
         if (core == null) {
-            callbackContext.error(resolveNotConfiguredMessage())
+            callbackContext.error(notConfiguredMessage)
             return
         }
         DebugScreen.show(cordova.activity, core)
@@ -229,7 +230,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     private fun run(callbackContext: CallbackContext, body: suspend (Core) -> JSONObject?) {
         val core = core
         if (core == null) {
-            callbackContext.error(resolveNotConfiguredMessage())
+            callbackContext.error(notConfiguredMessage)
             return
         }
         scope.launch {
@@ -253,8 +254,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
 
     /** Cordova loads the app from `file://` then, where its asset loader, and with it the plugin, never answers a request. */
     private fun isInsecureFileModeEnabled(): Boolean = preferences.getBoolean(INSECURE_FILE_MODE_PREFERENCE, false)
-
-    private fun resolveNotConfiguredMessage(): String = if (isInsecureFileModeEnabled()) INSECURE_FILE_MODE_MESSAGE else notConfiguredMessage
 
     /** The page Cordova starts the app on, from `config.xml`'s content source under the app's scheme and hostname. */
     private fun launchUrl(): String = ConfigXmlParser().apply { parse(cordova.context) }.launchUrl
