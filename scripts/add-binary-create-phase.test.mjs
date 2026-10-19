@@ -98,21 +98,6 @@ describe('add-binary-create-phase.js', () => {
     );
   });
 
-  it('should append the phase to the project file, with a warning, when cordova-ios cannot be loaded from the platform', t => {
-    rmSync(join(projectRoot, 'node_modules'), { recursive: true });
-    const warn = t.mock.method(console, 'warn', () => {});
-
-    addBinaryCreatePhaseToPlatform({
-      opts: { platforms: ['ios'], projectRoot },
-    });
-
-    assert.equal(
-      readPhases(projectFilePath).at(-1).name,
-      'Create HotCodePush binary',
-    );
-    assert.equal(warn.mock.callCount(), 1);
-  });
-
   it('should leave the project as it is when the phase is there', () => {
     addBinaryCreatePhaseToPlatform({
       opts: { platforms: ['ios'], projectRoot },

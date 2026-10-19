@@ -1,6 +1,5 @@
-const { realpathSync, writeFileSync } = require('node:fs');
+const { realpathSync } = require('node:fs');
 const { join } = require('node:path');
-const xcode = require('xcode');
 
 const APP_TARGET_NAME = 'App';
 
@@ -49,17 +48,9 @@ function addBinaryCreatePhase(platformRoot) {
     pbxproj: join(platformRoot, 'App.xcodeproj', 'project.pbxproj'),
     root: platformRoot,
   };
-  const cordovaProjectFile = requireCordovaProjectFile(platformRoot);
-  const project = cordovaProjectFile
-    ? cordovaProjectFile.parse(locations)
-    : parseProjectFile(locations.pbxproj);
+  const project = requireCordovaProjectFile(platformRoot).parse(locations);
   if (hasBinaryCreatePhase(project.xcode)) {
     return;
-  }
-  if (!cordovaProjectFile) {
-    console.warn(
-      'HotCodePush: cordova-ios cannot be loaded from platforms/ios, so the Xcode phase goes into the project file alone and a signed build in the same run may drop it; run cordova prepare before it.',
-    );
   }
   const { buildPhase } = project.xcode.addBuildPhase(
     [],
@@ -80,29 +71,14 @@ function addBinaryCreatePhase(platformRoot) {
 
 /**
  * cordova-ios's module that parses the project once per CLI run and writes it, resolved as the platform's Api.js
- * resolves cordova-ios, so the hook shares the CLI's instance; undefined when it cannot be loaded.
+ * resolves cordova-ios, so the hook shares the CLI's instance.
  */
 function requireCordovaProjectFile(platformRoot) {
-  try {
-    return require(
-      require.resolve('cordova-ios/lib/projectFile', {
-        paths: [join(platformRoot, 'cordova')],
-      }),
-    );
-  } catch {
-    return undefined;
-  }
-}
-
-/**
- * The project file parsed on its own, in the shape cordova-ios's parsed project has.
- */
-function parseProjectFile(projectFilePath) {
-  const project = xcode.project(projectFilePath).parseSync();
-  return {
-    write: () => writeFileSync(projectFilePath, project.writeSync()),
-    xcode: project,
-  };
+  return require(
+    require.resolve('cordova-ios/lib/projectFile', {
+      paths: [join(platformRoot, 'cordova')],
+    }),
+  );
 }
 
 function hasBinaryCreatePhase(project) {
