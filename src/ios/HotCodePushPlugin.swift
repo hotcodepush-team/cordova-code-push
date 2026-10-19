@@ -104,12 +104,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(downloadUpdate:) func downloadUpdate(_ command: CDVInvokedUrlCommand) {
-        do {
-            let options = try HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command))
-            run(command) { core in try await core.downloadUpdate(options: options) }
-        } catch {
-            reject(command, error.localizedDescription)
-        }
+        run(command) { core in try await core.downloadUpdate(options: HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command))) }
     }
 
     @objc(getChannel:) func getChannel(_ command: CDVInvokedUrlCommand) {
@@ -175,11 +170,10 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(setRestartAllowed:) func setRestartAllowed(_ command: CDVInvokedUrlCommand) {
-        guard let isAllowed = HotCodePushPlugin.options(of: command)["isAllowed"] as? Bool else {
-            reject(command, "isAllowed must be a boolean")
-            return
+        runVoid(command) { core in
+            guard let isAllowed = HotCodePushPlugin.options(of: command)["isAllowed"] as? Bool else { throw PlainError("isAllowed must be a boolean") }
+            await core.setRestartAllowed(isAllowed)
         }
-        runVoid(command) { core in await core.setRestartAllowed(isAllowed) }
     }
 
     @objc(showDebugScreen:) func showDebugScreen(_ command: CDVInvokedUrlCommand) {
@@ -194,12 +188,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(sync:) func sync(_ command: CDVInvokedUrlCommand) {
-        do {
-            let options = try HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command))
-            run(command) { core in try await core.sync(trigger: .manual, options: options) }
-        } catch {
-            reject(command, error.localizedDescription)
-        }
+        run(command) { core in try await core.sync(trigger: .manual, options: HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command))) }
     }
 
     // MARK: The bridge

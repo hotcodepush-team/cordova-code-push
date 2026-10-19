@@ -134,7 +134,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             "applyUpdate" -> run(callbackContext) { it.applyUpdate().toJson() }
             "checkForUpdate" -> run(callbackContext) { it.checkForUpdate().toJson() }
             "clearUpdates" -> runVoid(callbackContext) { it.clearUpdates() }
-            "downloadUpdate" -> downloadUpdate(options, callbackContext)
+            "downloadUpdate" -> run(callbackContext) { it.downloadUpdate(downloadUpdateOptions(options)).toJson() }
             "getChannel" -> run(callbackContext) { it.channel().toJson() }
             "getDevice" -> run(callbackContext) { it.deviceResult().toJson() }
             "getState" -> run(callbackContext) { it.getState().toJson() }
@@ -144,22 +144,14 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             "rollbackUpdate" -> runVoid(callbackContext) { it.rollbackUpdate(options.optStringOrNull("reason")) }
             "setAttributes" -> setAttributes(options, callbackContext)
             "setChannel" -> runVoid(callbackContext) { it.setChannel(channelChoice(options)) }
-            "setRestartAllowed" -> setRestartAllowed(options, callbackContext)
+            "setRestartAllowed" -> runVoid(callbackContext) {
+                it.setRestartAllowed(options.opt("isAllowed") as? Boolean ?: throw PlainException("isAllowed must be a boolean"))
+            }
             "showDebugScreen" -> showDebugScreen(callbackContext)
-            "sync" -> sync(options, callbackContext)
+            "sync" -> run(callbackContext) { it.sync(SyncTrigger.MANUAL, syncOptions(options)).toJson() }
             else -> return false
         }
         return true
-    }
-
-    private fun downloadUpdate(options: JSONObject, callbackContext: CallbackContext) {
-        val downloadUpdateOptions = try {
-            downloadUpdateOptions(options)
-        } catch (exception: PlainException) {
-            callbackContext.error(exception.message)
-            return
-        }
-        run(callbackContext) { it.downloadUpdate(downloadUpdateOptions).toJson() }
     }
 
     /** The one callback the web layer registers for the life of the page; every event is answered on it. */
@@ -186,15 +178,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         runVoid(callbackContext) { it.setAttributes(changes) }
     }
 
-    private fun setRestartAllowed(options: JSONObject, callbackContext: CallbackContext) {
-        val isAllowed = options.opt("isAllowed") as? Boolean
-        if (isAllowed == null) {
-            callbackContext.error("isAllowed must be a boolean")
-            return
-        }
-        runVoid(callbackContext) { it.setRestartAllowed(isAllowed) }
-    }
-
     private fun showDebugScreen(callbackContext: CallbackContext) {
         val core = core
         if (core == null) {
@@ -203,16 +186,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         }
         DebugScreen.show(cordova.activity, core)
         callbackContext.success()
-    }
-
-    private fun sync(options: JSONObject, callbackContext: CallbackContext) {
-        val syncOptions = try {
-            syncOptions(options)
-        } catch (exception: PlainException) {
-            callbackContext.error(exception.message)
-            return
-        }
-        run(callbackContext) { it.sync(SyncTrigger.MANUAL, syncOptions).toJson() }
     }
 
     private fun channelChoice(options: JSONObject): ChannelChoice? =
