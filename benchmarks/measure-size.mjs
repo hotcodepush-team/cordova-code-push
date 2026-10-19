@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 // The binary size of a prepared demo variant: the release APK, signed with the debug keystore the demo's build.json
-// names, and the Release simulator `.app`, each in bytes, printed as JSON. `--android-only` skips the Xcode build on a
-// runner without one.
+// names, and the Release simulator `.app`, each in bytes, printed as JSON.
 import { execFileSync } from 'node:child_process';
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const [target, ...flags] = process.argv.slice(2);
+const [target] = process.argv.slice(2);
 if (!target) {
-  console.error('usage: measure-size.mjs <prepared demo> [--android-only]');
+  console.error('usage: measure-size.mjs <prepared demo>');
   process.exit(2);
 }
 
@@ -27,17 +26,15 @@ sizes.android = {
     ),
   ).size,
 };
-if (!flags.includes('--android-only')) {
-  build(['ios', '--release', '--emulator']);
-  sizes.ios = {
-    simulatorAppBytes: directorySize(
-      join(
-        target,
-        'platforms/ios/build/Release-iphonesimulator/HotCodePush Demo.app',
-      ),
+build(['ios', '--release', '--emulator']);
+sizes.ios = {
+  simulatorAppBytes: directorySize(
+    join(
+      target,
+      'platforms/ios/build/Release-iphonesimulator/HotCodePush Demo.app',
     ),
-  };
-}
+  ),
+};
 console.log(JSON.stringify(sizes));
 
 function build(args) {
