@@ -7,8 +7,6 @@ import WebKit
 /// The Cordova bridge over the shared core: every action is one call into the core, every answer one JSON object.
 @objc(HotCodePushPlugin)
 public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
-    public static let sdkVersion = "0.0.0"
-
     private static let missingResourceFileMessage = "HotCodePush is not configured: hotcodepush.json is missing from the app's resources. Run `npx hotcodepush init` and build the app once."
     private static let retainedEventName = "updateRolledBack"
 

@@ -39,6 +39,7 @@
         <framework src="src/android/hotcodepush.gradle" custom="true" type="gradleReference" />
         <source-file src="src/android/CordovaBundleLoader.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
         <source-file src="src/android/HotCodePushPlugin.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
+        <source-file src="src/android/SdkVersion.kt" target-dir="app/src/main/kotlin/com/hotcodepush/cordova" />
     </platform>
 
     <!-- A Swift package: Package.swift names the sources and the core it is built on. -->

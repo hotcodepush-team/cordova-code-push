@@ -314,7 +314,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     }
 
     companion object {
-        const val SDK_VERSION = "0.0.0"
         private const val INSECURE_FILE_MODE_PREFERENCE = "AndroidInsecureFileModeEnabled"
         private const val INSECURE_FILE_MODE_MESSAGE = "HotCodePush is off: the $INSECURE_FILE_MODE_PREFERENCE preference loads the app from file://, where no update can be served. Remove the preference from config.xml to take updates."
         private const val MISSING_RESOURCE_FILE_MESSAGE = "HotCodePush is not configured: hotcodepush.json is missing from the app's assets. Run `npx hotcodepush init` and build the app once."
