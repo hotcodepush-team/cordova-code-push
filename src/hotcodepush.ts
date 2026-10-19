@@ -1,8 +1,6 @@
-import type {
-  HotCodePushApi,
-  HotCodePushEventName,
-} from '@hotcodepush/protocol';
+import type { HotCodePushEventName } from '@hotcodepush/protocol';
 import exec = require('cordova/exec');
+import type { HotCodePushPlugin } from './definitions';
 
 type Listener = (event: unknown) => void;
 
@@ -84,7 +82,7 @@ const retainedEventsByName = new Map<HotCodePushEventName, unknown>();
 /**
  * The plugin as Cordova clobbers it onto `window.HotCodePush`: every method is one call into the native core.
  */
-const hotCodePush: HotCodePushApi = {
+const hotCodePush: HotCodePushPlugin = {
   addListener: (eventName, listener) => {
     const listeners = listenersByEventName.get(eventName) ?? new Set();
     listeners.add(listener as Listener);

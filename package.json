@@ -46,7 +46,7 @@
     "verify:ios": "npm run build && node scripts/build-test-app.mjs ios"
   },
   "dependencies": {
-    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@20053f1",
+    "@hotcodepush/protocol": "https://pkg.pr.new/hotcodepush-team/protocol/@hotcodepush/protocol@876a411",
     "xcode": "3.0.1"
   },
   "devDependencies": {
