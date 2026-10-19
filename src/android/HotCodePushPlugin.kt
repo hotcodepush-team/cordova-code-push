@@ -133,19 +133,32 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         when (action) {
             "applyUpdate" -> run(callbackContext) { it.applyUpdate().toJson() }
             "checkForUpdate" -> run(callbackContext) { it.checkForUpdate().toJson() }
-            "clearUpdates" -> runVoid(callbackContext) { it.clearUpdates() }
+            "clearUpdates" -> run(callbackContext) {
+                it.clearUpdates()
+                null
+            }
             "downloadUpdate" -> run(callbackContext) { it.downloadUpdate(downloadUpdateOptions(options)).toJson() }
             "getChannel" -> run(callbackContext) { it.channel().toJson() }
             "getDevice" -> run(callbackContext) { it.deviceResult().toJson() }
             "getState" -> run(callbackContext) { it.getState().toJson() }
             "listen" -> listen(callbackContext)
             "notifyReady" -> run(callbackContext) { it.notifyReady().toJson() }
-            "notifyRendered" -> runVoid(callbackContext) { it.handleRendered() }
-            "rollbackUpdate" -> runVoid(callbackContext) { it.rollbackUpdate(options.optStringOrNull("reason")) }
+            "notifyRendered" -> run(callbackContext) {
+                it.handleRendered()
+                null
+            }
+            "rollbackUpdate" -> run(callbackContext) {
+                it.rollbackUpdate(options.optStringOrNull("reason"))
+                null
+            }
             "setAttributes" -> setAttributes(options, callbackContext)
-            "setChannel" -> runVoid(callbackContext) { it.setChannel(channelChoice(options)) }
-            "setRestartAllowed" -> runVoid(callbackContext) {
+            "setChannel" -> run(callbackContext) {
+                it.setChannel(channelChoice(options))
+                null
+            }
+            "setRestartAllowed" -> run(callbackContext) {
                 it.setRestartAllowed(options.opt("isAllowed") as? Boolean ?: throw PlainException("isAllowed must be a boolean"))
+                null
             }
             "showDebugScreen" -> showDebugScreen(callbackContext)
             "sync" -> run(callbackContext) { it.sync(SyncTrigger.MANUAL, syncOptions(options)).toJson() }
@@ -175,7 +188,10 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
                 }
             }
         }
-        runVoid(callbackContext) { it.setAttributes(changes) }
+        run(callbackContext) {
+            it.setAttributes(changes)
+            null
+        }
     }
 
     private fun showDebugScreen(callbackContext: CallbackContext) {
@@ -209,7 +225,8 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         return parse(raw) ?: throw PlainException("$name is not one of its choices: $raw")
     }
 
-    private fun run(callbackContext: CallbackContext, body: suspend (Core) -> JSONObject) {
+    /** Answers the body's result, or `success()` with no message when an action that returns nothing ends its body in `null`. */
+    private fun run(callbackContext: CallbackContext, body: suspend (Core) -> JSONObject?) {
         val core = core
         if (core == null) {
             callbackContext.error(resolveNotConfiguredMessage())
@@ -217,23 +234,8 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         }
         scope.launch {
             try {
-                callbackContext.success(body(core))
-            } catch (exception: Exception) {
-                callbackContext.error(exception.message)
-            }
-        }
-    }
-
-    private fun runVoid(callbackContext: CallbackContext, body: suspend (Core) -> Unit) {
-        val core = core
-        if (core == null) {
-            callbackContext.error(resolveNotConfiguredMessage())
-            return
-        }
-        scope.launch {
-            try {
-                body(core)
-                callbackContext.success()
+                val result = body(core)
+                if (result == null) callbackContext.success() else callbackContext.success(result)
             } catch (exception: Exception) {
                 callbackContext.error(exception.message)
             }

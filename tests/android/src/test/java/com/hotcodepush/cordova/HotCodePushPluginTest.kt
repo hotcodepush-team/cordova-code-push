@@ -11,9 +11,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockConstruction
+import org.mockito.Mockito.never
 import org.mockito.Mockito.timeout
 import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
@@ -35,6 +37,19 @@ class HotCodePushPluginTest {
             plugin.execute("sync", JSONArray().put(JSONObject().put("applyStrategy", "later")), callbackContext)
 
             verify(callbackContext, timeout(CALL_TIMEOUT_MILLIS)).error("applyStrategy is not one of its choices: later")
+        }
+    }
+
+    @Test
+    fun shouldAnswerSuccessWithNoMessageWhenTheActionReturnsNothing() {
+        mockConstruction(Core::class.java).use {
+            initializePlugin()
+            val callbackContext = mock(CallbackContext::class.java)
+
+            plugin.execute("clearUpdates", JSONArray(), callbackContext)
+
+            verify(callbackContext, timeout(CALL_TIMEOUT_MILLIS)).success()
+            verify(callbackContext, never()).success(any(JSONObject::class.java))
         }
     }
 

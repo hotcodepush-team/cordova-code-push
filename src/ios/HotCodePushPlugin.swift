@@ -92,31 +92,34 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     // MARK: Actions
 
     @objc(applyUpdate:) func applyUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.applyUpdate() }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.applyUpdate()) }
     }
 
     @objc(checkForUpdate:) func checkForUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try await core.checkForUpdate() }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.checkForUpdate()) }
     }
 
     @objc(clearUpdates:) func clearUpdates(_ command: CDVInvokedUrlCommand) {
-        runVoid(command) { core in await core.clearUpdates() }
+        run(command) { core in
+            await core.clearUpdates()
+            return nil
+        }
     }
 
     @objc(downloadUpdate:) func downloadUpdate(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try await core.downloadUpdate(options: HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command))) }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.downloadUpdate(options: HotCodePushPlugin.downloadUpdateOptions(from: HotCodePushPlugin.options(of: command)))) }
     }
 
     @objc(getChannel:) func getChannel(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.channel() }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.channel()) }
     }
 
     @objc(getDevice:) func getDevice(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.deviceResult() }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.deviceResult()) }
     }
 
     @objc(getState:) func getState(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.getState() }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.getState()) }
     }
 
     /// The one callback the web layer registers for the life of the page; every event is answered on it.
@@ -129,16 +132,22 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(notifyReady:) func notifyReady(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in await core.notifyReady() }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.notifyReady()) }
     }
 
     @objc(notifyRendered:) func notifyRendered(_ command: CDVInvokedUrlCommand) {
-        runVoid(command) { core in await core.handleRendered() }
+        run(command) { core in
+            await core.handleRendered()
+            return nil
+        }
     }
 
     @objc(rollbackUpdate:) func rollbackUpdate(_ command: CDVInvokedUrlCommand) {
         let reason = HotCodePushPlugin.options(of: command)["reason"] as? String
-        runVoid(command) { core in try await core.rollbackUpdate(detail: reason) }
+        run(command) { core in
+            try await core.rollbackUpdate(detail: reason)
+            return nil
+        }
     }
 
     @objc(setAttributes:) func setAttributes(_ command: CDVInvokedUrlCommand) {
@@ -153,7 +162,10 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
                 return
             }
         }
-        runVoid(command) { core in try await core.setAttributes(changes) }
+        run(command) { core in
+            try await core.setAttributes(changes)
+            return nil
+        }
     }
 
     @objc(setChannel:) func setChannel(_ command: CDVInvokedUrlCommand) {
@@ -166,13 +178,17 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         } else {
             choice = nil
         }
-        runVoid(command) { core in try await core.setChannel(choice) }
+        run(command) { core in
+            try await core.setChannel(choice)
+            return nil
+        }
     }
 
     @objc(setRestartAllowed:) func setRestartAllowed(_ command: CDVInvokedUrlCommand) {
-        runVoid(command) { core in
+        run(command) { core in
             guard let isAllowed = HotCodePushPlugin.options(of: command)["isAllowed"] as? Bool else { throw PlainError("isAllowed must be a boolean") }
             await core.setRestartAllowed(isAllowed)
+            return nil
         }
     }
 
@@ -188,7 +204,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(sync:) func sync(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try await core.sync(trigger: .manual, options: HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command))) }
+        run(command) { core in try HotCodePushPlugin.jsonObject(await core.sync(trigger: .manual, options: HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command)))) }
     }
 
     // MARK: The bridge
@@ -219,30 +235,16 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         return value
     }
 
-    private func run<T: Encodable>(_ command: CDVInvokedUrlCommand, _ body: @escaping (Core) async throws -> T) {
+    /// Answers the body's result, or an empty success when an action that returns nothing ends its body in `nil`.
+    private func run(_ command: CDVInvokedUrlCommand, _ body: @escaping (Core) async throws -> [String: Any]?) {
         guard let core = core else {
             reject(command, notConfiguredMessage)
             return
         }
         Task {
             do {
-                let result = CDVPluginResult(status: .ok, messageAs: try HotCodePushPlugin.jsonObject(try await body(core)))
+                let result = try await body(core).map { CDVPluginResult(status: .ok, messageAs: $0) } ?? CDVPluginResult(status: .ok)
                 commandDelegate.send(result, callbackId: command.callbackId)
-            } catch {
-                reject(command, error.localizedDescription)
-            }
-        }
-    }
-
-    private func runVoid(_ command: CDVInvokedUrlCommand, _ body: @escaping (Core) async throws -> Void) {
-        guard let core = core else {
-            reject(command, notConfiguredMessage)
-            return
-        }
-        Task {
-            do {
-                try await body(core)
-                commandDelegate.send(CDVPluginResult(status: .ok), callbackId: command.callbackId)
             } catch {
                 reject(command, error.localizedDescription)
             }
