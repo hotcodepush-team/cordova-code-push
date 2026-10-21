@@ -11,7 +11,7 @@ final class CordovaBundleLoader: BundleLoader {
     /// What `cordova prepare` adds to the app's own files: the bridge of the binary's plugins, never a bundle's.
     private static let frameworkFilePaths: Set<String> = ["/cordova.js", "/cordova_plugins.js"]
     private static let frameworkPathPrefixes = ["/plugins/", "/_app_file_"]
-    private static let persistedBundleKey = "hotcodepush.cordova.servedBundleId"
+    private static let persistedBundleKey = "hotcodepush.servedBundleId"
 
     private let lock = NSLock()
     private let networkMonitor = NetworkMonitor()

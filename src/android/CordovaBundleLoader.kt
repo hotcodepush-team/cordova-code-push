@@ -98,7 +98,7 @@ class CordovaBundleLoader(
         const val EMBEDDED_ASSET_PATH = "www"
         private val FRAMEWORK_FILE_PATHS = setOf("cordova.js", "cordova_plugins.js")
         private const val FRAMEWORK_PLUGINS_PREFIX = "plugins/"
-        private const val SERVED_BUNDLE_KEY = "hotcodepush.cordova.servedBundleId"
+        private const val SERVED_BUNDLE_KEY = "hotcodepush.servedBundleId"
         private const val START_PAGE = "index.html"
     }
 }
