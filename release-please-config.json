@@ -1,0 +1,8 @@
+{
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "extra-files": [{ "path": "plugin.xml", "type": "generic" }],
+  "initial-version": "0.1.0",
+  "packages": { ".": {} },
+  "release-type": "node"
+}

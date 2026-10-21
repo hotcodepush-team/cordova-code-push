@@ -11,6 +11,8 @@ When code and plan disagree, stop and surface it; never improvise.
 
 ```
 plugin.xml             the plugin: the JavaScript module, the iOS hook that adds the build phase, the Android sources and Gradle reference, the iOS Swift package
+plugin.test.mjs        its test: plugin.xml carries package.json's version
+release-please-config.json  the release bumps package.json's version and plugin.xml's, at its x-release-please-version marker
 Package.swift          the iOS half as a Swift package named after the plugin's id, over Cordova and HotCodePushCore
 src/hotcodepush.ts     the module Cordova clobbers onto window.HotCodePush: one native call per method, the events, the readiness signal
 src/definitions.ts     the types the package exports and the global it declares
@@ -36,7 +38,7 @@ The plugin layer keeps the bundle loader, the readiness signal and the bridge, n
 | `npm run lint`                         | ESLint, Prettier and SwiftLint                                                                                                                                                                                              |
 | `npm run build`                        | the TypeScript into `dist/`, which `plugin.xml` names; writes the SDK version from `package.json` into `SdkVersion.swift` and `SdkVersion.kt`, both ignored, so a fresh checkout runs it before opening the native projects |
 | `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform                                                                                                                                                                     |
-| `npm test`                             | the module, the hook and the script; the script's tests run on macOS                                                                                                                                                        |
+| `npm test`                             | the module, the hook, the script and plugin.xml's version; the script's tests run on macOS                                                                                                                                  |
 | `npm run test:android`                 | the Kotlin's Robolectric tests, in `tests/android`                                                                                                                                                                          |
 | `npm run test:ios`                     | the Swift tests on Mac Catalyst, in `tests/ios`                                                                                                                                                                             |
 
