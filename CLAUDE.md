@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-The HotCodePush Cordova SDK: `@hotcodepush/cordova-code-push`, the plugin that delivers live updates to Cordova apps on iOS and Android.
+The HotCodePush Cordova SDK: `@hotcodepush/cordova-code-push`, the plugin that delivers over-the-air (OTA) updates to Cordova apps on iOS and Android.
 Stack: TypeScript for the JavaScript module and the types, Swift for the iOS bridge, Kotlin for the Android bridge, `cordova-ios` 8, `cordova-android` 15 and 14.
 
 The plan is the private `handbook` repo, checked out beside this one: `../handbook/docs/`.
