@@ -1,6 +1,6 @@
 # Cordova code push by HotCodePush
 
-`@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air updates to your app: a code push reaches installed apps in seconds, without a store review. Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordova-code-push).
+`@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air (OTA) updates to your app: a code push reaches installed apps in seconds, without a store review. Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordova-code-push).
 
 ## Installation
 

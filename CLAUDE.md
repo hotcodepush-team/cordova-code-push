@@ -64,6 +64,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The resource file is `www/hotcodepush.json`, written by the Xcode phase into the built app's `www` and by the Gradle task into the variant's generated `www` assets; the embedded bundle is the platform's `www`, addressed by the embedded manifest's hashes, without the native glue the loader serves from the binary.
 - The plugin's `plugin.xml` sets `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion`, so an app adds the plugin and edits nothing; the app's own preference wins.
 - A page start the plugin did not request, `location.reload()`, a navigation, iOS's recovery from a web content crash, is never reported to the core: the process start decides what runs and gates it, a release stored for the next start waits for the next launch, and only the SDK's own reloads hold `updateRolledBack` for the page that follows.
+- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update platform for Capacitor, React Native, Expo and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
 
 ## Agent workspace
 

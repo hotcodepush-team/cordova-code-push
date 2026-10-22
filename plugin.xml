@@ -3,7 +3,7 @@
     id="@hotcodepush/cordova-code-push"
     version="0.0.0"> <!-- x-release-please-version -->
     <name>HotCodePush</name>
-    <description>Cordova code push by HotCodePush: the plugin that delivers over-the-air updates to your Cordova app</description>
+    <description>Cordova code push by HotCodePush: the plugin that delivers over-the-air (OTA) updates to your Cordova app</description>
     <license>MIT</license>
     <keywords>cordova,code push,hot code push,live updates,ota updates,over-the-air updates</keywords>
 
