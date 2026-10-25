@@ -24,7 +24,7 @@ On Android, `AndroidInsecureFileModeEnabled` loads the app from `file://`, where
 ```js
 document.addEventListener('deviceready', async () => {
   const result = await HotCodePush.sync();
-  if (result.status === 'DOWNLOADED') {
+  if (result.status === 'downloaded') {
     console.log(
       `release #${result.release.number} applies at ${result.applyStrategy}`,
     );
@@ -44,7 +44,7 @@ const result: SyncResult = await HotCodePush.sync();
 
 A bundle carries your web build, `www`. `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary, since they are the bridge to the native plugins compiled into it.
 
-A release that applies at `next-start` waits for the app's next launch; `location.reload()` or a navigation reloads the running bundle and applies nothing.
+A release that applies at `next_start` waits for the app's next launch; `location.reload()` or a navigation reloads the running bundle and applies nothing.
 
 ## Documentation
 

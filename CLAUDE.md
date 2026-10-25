@@ -56,7 +56,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The SDK never sees an API DTO: its contract is the channel index, the bundle manifest and the events endpoint, additive only.
 - Safety is on by default and cannot be switched off: the readiness gate, the local blocklist, the automatic rollback. The embedded bundle is the one exception: a release that carries it is confirmed as it becomes current, never gated, rolled back or blocklisted, and downloads nothing.
 - Nothing a device does not need to decide lives here: rollout, conditions, revocation and the cap are evaluated from the index, never configured.
-- Statuses and reasons are `SCREAMING_SNAKE_CASE` from the one catalog; a method throws a plain error only for a programming mistake.
+- Every catalog value is lowercase snake_case with no prefix, the statuses, the reasons and the strategies alike: `up_to_date`, `signature_invalid`, `next_start`; the event names, the methods, the fields, the preferences, the environment variables and each language's identifiers keep their own form. A method throws a plain error only for a programming mistake.
 - The plugin's id is its package name, `@hotcodepush/cordova-code-push`: Cordova restores a plugin by looking its id up among `package.json`'s dependencies, and `cordova-ios` names the Swift package and its product after it.
 - A bundle is served on the app's own origin: the plugin answers Cordova's scheme handler on iOS and its asset loader on Android before Cordova does, from the bundle's directory under the store; no start page is swapped and no storage moves.
 - `cordova.js`, `cordova_plugins.js` and `plugins/` are the binary's under every bundle: a request for them is never answered from a bundle's directory.

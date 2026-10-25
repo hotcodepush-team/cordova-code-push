@@ -18,7 +18,7 @@ const UPDATE_ROLLED_BACK_EVENT = {
     isMandatory: false,
     number: 43,
   },
-  reason: 'APP_REQUESTED',
+  reason: 'app_requested',
   toRelease: null,
 };
 
@@ -71,8 +71,8 @@ const ACCEPTED_OPTIONS = [
   ['downloadUpdate', undefined, {}],
   [
     'downloadUpdate',
-    { applyStrategy: 'immediate', mandatoryApplyStrategy: 'next-start' },
-    { applyStrategy: 'immediate', mandatoryApplyStrategy: 'next-start' },
+    { applyStrategy: 'immediate', mandatoryApplyStrategy: 'manual' },
+    { applyStrategy: 'immediate', mandatoryApplyStrategy: 'manual' },
   ],
   ['rollbackUpdate', undefined, {}],
   [
@@ -192,7 +192,7 @@ describe('hotcodepush.ts', () => {
       );
 
       await handle.remove();
-      page.sendNativeEvent('updateFailed', { reason: 'DEVICE_OFFLINE' });
+      page.sendNativeEvent('updateFailed', { reason: 'device_offline' });
 
       assert.deepEqual(listener.calls, []);
     });
