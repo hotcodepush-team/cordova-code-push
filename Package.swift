@@ -4,7 +4,7 @@ import PackageDescription
 // The package and its product carry the plugin's id: cordova-ios adds a Swift package plugin to the app under that name.
 let package = Package(
     name: "@hotcodepush/cordova-code-push",
-    platforms: [.iOS(.v13)],
+    platforms: [.iOS(.v15)],
     products: [
         .library(
             name: "@hotcodepush/cordova-code-push",
@@ -12,7 +12,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apache/cordova-ios.git", from: "8.0.0"),
-        .package(url: "https://github.com/hotcodepush-team/core-ios.git", revision: "17a2cc92ac21c870cec9a5cfe32d427433bdfb70")
+        .package(url: "https://github.com/hotcodepush-team/core-ios.git", revision: "906073c537d9651a91ef644d4ca694e1642dc69f")
     ],
     targets: [
         .target(

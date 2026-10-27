@@ -1,5 +1,4 @@
 import Foundation
-import MobileCoreServices
 import UniformTypeIdentifiers
 import WebKit
 
@@ -118,19 +117,12 @@ final class ServedFileResponder {
         if let mimeType = mimeTypesByExtension[pathExtension] {
             return mimeType
         }
-        if #available(iOS 14.0, *) {
-            return UTType(filenameExtension: pathExtension)?.preferredMIMEType ?? fallbackMimeType
-        }
-        return (ServedFileResponder.self as LegacyMimeTypes.Type).legacyMimeType(forExtension: pathExtension) ?? fallbackMimeType
+        return UTType(filenameExtension: pathExtension)?.preferredMIMEType ?? fallbackMimeType
     }
 
-    /// Up to `count` bytes, none at the end of the file. A read that fails throws from iOS 13.4 on;
-    /// before it, `readData(ofLength:)` raises an Objective-C exception, which no Swift code catches.
+    /// Up to `count` bytes, none at the end of the file; a read that fails throws.
     static func readChunk(of handle: FileHandle, upToCount count: Int) throws -> Data {
-        if #available(iOS 13.4, *) {
-            return try handle.read(upToCount: count) ?? Data()
-        }
-        return handle.readData(ofLength: count)
+        return try handle.read(upToCount: count) ?? Data()
     }
 
     /// The range a `Range: bytes=` header asks per RFC 9110, `<start>-<end>`, `<start>-` or `-<length>`, clamped to the file.
@@ -166,21 +158,5 @@ final class ServedFileResponder {
             return .unsatisfiable
         }
         return .part(ByteRange(offset: start, length: Int(min(end, size - 1) - start + 1)))
-    }
-}
-
-/// iOS 13 has no `UTType`; its type table is reached through the functions iOS 15 deprecates.
-/// Called through the protocol, the deprecation stays here and out of every build of an app with a newer deployment target.
-private protocol LegacyMimeTypes {
-    static func legacyMimeType(forExtension pathExtension: String) -> String?
-}
-
-extension ServedFileResponder: LegacyMimeTypes {
-    @available(iOS, deprecated: 14.0)
-    fileprivate static func legacyMimeType(forExtension pathExtension: String) -> String? {
-        guard let identifier = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension as CFString, nil)?.takeRetainedValue() else {
-            return nil
-        }
-        return UTTypeCopyPreferredTagWithClass(identifier, kUTTagClassMIMEType)?.takeRetainedValue() as String?
     }
 }

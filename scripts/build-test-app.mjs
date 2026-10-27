@@ -53,20 +53,6 @@ function run(args, cwd) {
 }
 
 /**
- * The oldest deployment target a current Xcode builds an app for; the plugin's own floor is in Package.swift.
- */
-function raiseIosDeploymentTarget() {
-  const configPath = join(appDirectory, 'config.xml');
-  writeFileSync(
-    configPath,
-    readFileSync(configPath, 'utf8').replace(
-      '</widget>',
-      '    <preference name="deployment-target" value="15.0" />\n</widget>',
-    ),
-  );
-}
-
-/**
  * The app in the state a fresh clone of it is in: platforms and plugins are not committed, so the first
  * `cordova prepare`, naming no platform, restores them from package.json.
  */
@@ -138,9 +124,6 @@ function isResourceFileBuilt() {
 
 try {
   run(['create', appDirectory, 'com.hotcodepush.verify', APP_NAME]);
-  if (platform === 'ios') {
-    raiseIosDeploymentTarget();
-  }
   run(
     [
       'platform',

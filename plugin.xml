@@ -45,6 +45,8 @@
                 <param name="ios-package" value="HotCodePushPlugin" />
                 <param name="onload" value="true" />
             </feature>
+            <!-- The app's deployment target at the plugin's iOS 15 floor: cordova-ios 8's template targets iOS 13. -->
+            <preference name="deployment-target" value="15.0" />
         </config-file>
     </platform>
 </plugin>
