@@ -12,7 +12,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apache/cordova-ios.git", from: "8.0.0"),
-        .package(url: "https://github.com/hotcodepush-team/core-ios.git", revision: "17a2cc92ac21c870cec9a5cfe32d427433bdfb70")
+        .package(url: "https://github.com/hotcodepush-team/core-ios.git", revision: "906073c537d9651a91ef644d4ca694e1642dc69f")
     ],
     targets: [
         .target(
