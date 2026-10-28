@@ -1,23 +1,21 @@
 # Cordova code push by HotCodePush
 
-`@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air (OTA) updates to your app: a code push reaches installed apps in seconds, without a store review. Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordova-code-push).
+`@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air (OTA) updates to your app: a code push reaches installed apps in seconds, without a store review.
+Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordova-code-push).
 
 ## Installation
 
-Until the package is published, add the preview build pkg.pr.new publishes for every commit on `main`, pinned to a commit:
+`npx hotcodepush init` adds the plugin and writes `hotcodepush.json`.
+By hand, until the package is on npm, add the preview build pkg.pr.new publishes for every commit on `main`, pinned to a commit:
 
 ```sh
 cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcodepush/cordova-code-push@<sha>
 ```
 
-A consumer pins a commit and bumps it deliberately; the preview comment on each commit names its `<sha>`. `npx hotcodepush init` runs the command for you and writes `hotcodepush.json`.
+The plugin needs `cordova-ios` 8, `cordova-android` 14 or 15 and iOS 15 or later, and it wires itself into the native builds.
+The native cores, `HotCodePushCore` on iOS and `com.hotcodepush:core-android`, resolve on their own.
 
-The plugin needs `cordova-ios` 8 and `cordova-android` 14 or 15, and it wires itself into the native builds: a Gradle task per variant on Android, and on iOS a build phase "Create HotCodePush binary" its hook adds to the Xcode project at `cordova platform add` and every `cordova prepare`. Every build writes `www/hotcodepush.json`, the resource file the SDK reads, into the built app; only an Xcode archive or a non-debug variant also creates the store build's binary, which needs a login or `HOTCODEPUSH_TOKEN`. Without a token on your machine, or with `HOTCODEPUSH_OFFLINE=1` for a build that is never shipped, the file names no channel and the build takes no updates; a pipeline's store build without a token fails instead. The Xcode phase finds Node through `platforms/ios/.xcode.env` (`export NODE_BINARY=…`, `.xcode.env.local` over it), else nvm, fnm, Volta, asdf or Homebrew.
-
-The native cores are the Swift package `HotCodePushCore` and the Android library `com.hotcodepush:core-android`, each pinned to a commit until it is published. On iOS the plugin is a Swift package: `cordova-ios` adds it to the app, and Swift Package Manager resolves the core at the pinned revision on its own, without CocoaPods. On Android the plugin switches the project's Kotlin Gradle plugin on at the version the core is compiled with, through the `GradlePluginKotlinEnabled` and `GradlePluginKotlinVersion` preferences, and adds core-android's `maven` branch, where the pinned commit is published, to the app module's repositories; a preference in your own `config.xml` wins over either. On iOS the plugin needs iOS 15 or later, so it sets the `deployment-target` preference to `15.0`, since `cordova-ios` 8's template targets iOS 13; a `deployment-target` of your own wins, and one below 15.0 fails the build.
-
-On Android the core keeps its store out of device backups and transfers: its manifest sets `android:fullBackupContent` and `android:dataExtractionRules` on `<application>`, merged into the app's manifest. An app that already sets either attribute hits a manifest-merger conflict. Add `tools:replace="android:fullBackupContent"` or `tools:replace="android:dataExtractionRules"` to `<application>` with an `<edit-config>` in your `config.xml`, and put `<exclude domain="file" path="hotcodepush/" />` into your own rules, inside both `<cloud-backup>` and `<device-transfer>` for the extraction rules; otherwise the store rides along in the backup again.
-On Android, `AndroidInsecureFileModeEnabled` loads the app from `file://`, where no update can be served: the plugin then stays off and every method rejects with an error that names the preference.
+Every native build writes `www/hotcodepush.json` into the app; an Xcode archive or a non-debug Android build also registers the store build in HotCodePush, so it needs `npx hotcodepush login` or `HOTCODEPUSH_TOKEN`.
 
 ## Usage
 
@@ -25,47 +23,39 @@ On Android, `AndroidInsecureFileModeEnabled` loads the app from `file://`, where
 document.addEventListener('deviceready', async () => {
   const result = await HotCodePush.sync();
   if (result.status === 'downloaded') {
-    console.log(
-      `release #${result.release.number} applies at ${result.applyStrategy}`,
-    );
+    console.log(`release #${result.release.number} applies at ${result.applyStrategy}`);
   }
 });
 ```
 
-The plugin is `window.HotCodePush` once `deviceready` has fired, every method returning a promise. With `checkStrategy` at `auto`, the default, the SDK checks on start, on resume and while the app stays in the foreground, and what follows a check is the download and apply strategies' business; `sync()` runs one such cycle when you want an update now, and with `checkStrategy` at `manual` it is the only way a cycle starts. An app that asks before downloading sets `downloadStrategy` to `manual` and calls `downloadUpdate()` on `updateAvailable`, naming the apply strategies for that cycle if it wants; one that protects a flow sets `applyStrategy` to `manual` and calls `applyUpdate()` when it is ready.
-
-A TypeScript project gets the global and the result types from the package:
-
-```ts
-import type { SyncResult } from '@hotcodepush/cordova-code-push';
-
-const result: SyncResult = await HotCodePush.sync();
-```
-
-A bundle carries your web build, `www`. `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary, since they are the bridge to the native plugins compiled into it.
-
-A release that applies at `next_start` waits for the app's next launch; `location.reload()` or a navigation reloads the running bundle and applies nothing.
+The plugin is `window.HotCodePush` once `deviceready` has fired, every method returning a promise; a TypeScript project imports the types from the package.
+With the default `checkStrategy` of `auto`, the SDK checks on start, on resume and in the foreground; `sync()` runs one cycle on demand.
+Set `downloadStrategy` or `applyStrategy` to `manual` and call `downloadUpdate()` or `applyUpdate()` yourself to control when an update lands.
+A bundle carries your web build, `www`; `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary.
 
 ## Documentation
 
-The SDK reference — configuration, methods, events, types and reasons — is at [hotcodepush.com/docs/cordova](https://hotcodepush.com/docs/cordova).
+See [hotcodepush.com/docs/cordova](https://hotcodepush.com/docs/cordova) for the configuration, methods, events, types and reasons.
 
 ## Development
 
 ```sh
 nvm use
 npm ci
+npm run build            # the TypeScript into dist/; run it before opening the native projects
 npm run lint
-npm run build
-npm run verify:ios       # a fresh Cordova app with the plugin, built as a store archive and for the simulator
-npm run verify:android   # the same app, built for Android; both check the resource file in the built app
-npm test                 # the module, the hook and the Xcode script, the script's tests on macOS only
-npm run test:android     # the Kotlin's Robolectric tests, built on their own
+npm test                 # the module, the hook and the Xcode script; the script's tests on macOS only
 npm run test:ios         # the Swift tests, on Mac Catalyst
+npm run test:android     # the Kotlin's Robolectric tests
+npm run verify:ios       # a fresh Cordova app with the plugin, built for iOS
+npm run verify:android   # the same app, built for Android
+npm run fmt              # run before every commit
 ```
 
 The cores and their tests live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
+`CLAUDE.md` holds the layout and the rules.
 
 ## License
 
-See [LICENSE](./LICENSE). An app that ships the plugin ships the native cores' third-party code with it: FreeBSD's bspatch under the BSD 2-clause licence on both platforms and, on Android, the decompression of bzip2 1.0.8 under the bzip2 licence. The cores' `THIRD-PARTY-NOTICES`, in [core-ios](https://github.com/hotcodepush-team/core-ios/blob/main/THIRD-PARTY-NOTICES) and in [core-android](https://github.com/hotcodepush-team/core-android/blob/main/THIRD-PARTY-NOTICES), carry the notices, and an app's distribution reproduces them: the BSD 2-clause licence requires it of a binary, the bzip2 licence appreciates the acknowledgment.
+See [LICENSE](./LICENSE).
+An app that ships the plugin also ships the native cores' third-party code: FreeBSD's bspatch (BSD 2-clause) on both platforms and bzip2 1.0.8 on Android. Reproduce the notices from [core-ios](https://github.com/hotcodepush-team/core-ios/blob/main/THIRD-PARTY-NOTICES) and [core-android](https://github.com/hotcodepush-team/core-android/blob/main/THIRD-PARTY-NOTICES) in your app's distribution.
