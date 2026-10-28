@@ -37,7 +37,7 @@ A bundle carries your web build, `www`; `cordova.js`, `cordova_plugins.js` and `
 
 ## Documentation
 
-See [hotcodepush.com/docs/cordova](https://hotcodepush.com/docs/cordova) for the configuration, methods, events, types and reasons.
+See [hotcodepush.com/docs/sdks/cordova](https://hotcodepush.com/docs/sdks/cordova) for the configuration, methods, events, types and reasons.
 
 ## Development
 
