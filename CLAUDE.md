@@ -25,10 +25,10 @@ scripts/*.test.mjs                  their tests on node --test
 scripts/build-test-app.mjs  the compile check: a fresh Cordova app with the plugin, built for one platform
 benchmarks/            the size and cold-start baseline measured on the demo, its harness, and the guard baseline.yml runs
 tests/android          the Kotlin of src/android built on its own over cordova-android's framework, with its Robolectric tests of the loader's path guards and of the plugin's calls over a mocked core
-tests/ios              the XCTest target over the loader and the scheme-task responder, run on Mac Catalyst under the shared scheme in .swiftpm
+tests/ios              the XCTest target over the loader and the scheme-task responder, run on an iOS simulator under the shared scheme in .swiftpm
 ```
 
-The native cores live in `core-ios` and `core-android`, consumed at pinned commits: `Package.swift` by `revision`, the Android module from core-android's `maven` branch by full sha in `src/android/hotcodepush.gradle`; a core change lands there first and arrives here as a bump of the pin.
+The native cores live in `core-ios` and `core-android`. `core-ios` is the XCFramework of a release, `Package.swift` pinning its URL and checksum; it has no Mac Catalyst slice, so the Swift tests run on an iOS simulator. The Android module comes from core-android's `maven` branch by full sha in `src/android/hotcodepush.gradle`. A core change lands there first and arrives here as a bump of the pin.
 The plugin layer keeps the bundle loader, the readiness signal and the bridge, nothing of the protocol.
 
 ## Commands
@@ -40,7 +40,7 @@ The plugin layer keeps the bundle loader, the readiness signal and the bridge, n
 | `npm run verify:ios`, `verify:android` | a fresh Cordova app with the plugin, built for platform                                                                                                                                                                     |
 | `npm test`                             | the module, the hook, the script and plugin.xml's version; the script's tests run on macOS                                                                                                                                  |
 | `npm run test:android`                 | the Kotlin's Robolectric tests, in `tests/android`                                                                                                                                                                          |
-| `npm run test:ios`                     | the Swift tests on Mac Catalyst, in `tests/ios`                                                                                                                                                                             |
+| `npm run test:ios`                     | the Swift tests on an iOS simulator, in `tests/ios`                                                                                                                                                                         |
 
 Run `npm run fmt` before every commit.
 The package is CommonJS on purpose: Cordova `require`s a plugin's hook script, so the tooling's own modules are `.mjs`.

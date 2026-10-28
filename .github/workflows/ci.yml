@@ -75,6 +75,6 @@ jobs:
       - run: swiftlint lint --quiet --strict
       # The Xcode build step's tests run on macOS alone.
       - run: npm test
-      # On Mac Catalyst, which boots no simulator.
+      # On an iOS simulator: the core's XCFramework has no Mac Catalyst slice.
       - run: npm run test:ios
       - run: npm run verify:ios
