@@ -13,7 +13,7 @@ cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcod
 ```
 
 The plugin needs `cordova-ios` 8, `cordova-android` 14 or 15 and iOS 15 or later, and it wires itself into the native builds.
-The native cores, `HotCodePushCore` on iOS and `com.hotcodepush:core-android`, resolve on their own.
+The native cores, `HotCodePushCore` on iOS, the prebuilt framework of a core-ios release, and `com.hotcodepush:core-android`, resolve on their own.
 
 Every native build writes `www/hotcodepush.json` into the app; an Xcode archive or a non-debug Android build also registers the store build in HotCodePush, so it needs `npx hotcodepush login` or `HOTCODEPUSH_TOKEN`.
 
@@ -23,7 +23,9 @@ Every native build writes `www/hotcodepush.json` into the app; an Xcode archive 
 document.addEventListener('deviceready', async () => {
   const result = await HotCodePush.sync();
   if (result.status === 'downloaded') {
-    console.log(`release #${result.release.number} applies at ${result.applyStrategy}`);
+    console.log(
+      `release #${result.release.number} applies at ${result.applyStrategy}`,
+    );
   }
 });
 ```
@@ -35,7 +37,7 @@ A bundle carries your web build, `www`; `cordova.js`, `cordova_plugins.js` and `
 
 ## Documentation
 
-See [hotcodepush.com/docs/cordova](https://hotcodepush.com/docs/cordova) for the configuration, methods, events, types and reasons.
+See [hotcodepush.com/docs/sdks/cordova](https://hotcodepush.com/docs/sdks/cordova) for the configuration, methods, events, types and reasons.
 
 ## Development
 
@@ -45,7 +47,7 @@ npm ci
 npm run build            # the TypeScript into dist/; run it before opening the native projects
 npm run lint
 npm test                 # the module, the hook and the Xcode script; the script's tests on macOS only
-npm run test:ios         # the Swift tests, on Mac Catalyst
+npm run test:ios         # the Swift tests, on an iOS simulator
 npm run test:android     # the Kotlin's Robolectric tests
 npm run verify:ios       # a fresh Cordova app with the plugin, built for iOS
 npm run verify:android   # the same app, built for Android

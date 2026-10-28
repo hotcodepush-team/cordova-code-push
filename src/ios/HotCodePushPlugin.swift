@@ -3,6 +3,13 @@ import Foundation
 import HotCodePushCore
 import WebKit
 
+// The core ships prebuilt in Release, so the app's debug flag is read here, where the plugin compiles with the app.
+#if DEBUG
+private let isDebugBuild = true
+#else
+private let isDebugBuild = false
+#endif
+
 /// The Cordova bridge over the shared core: every action is one call into the core, every answer one JSON object.
 @objc(HotCodePushPlugin)
 public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
@@ -34,7 +41,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         }
         let core = Core(
             configuration: configuration,
-            device: DeviceFacts.current(sdkVersion: sdkVersion),
+            device: DeviceFacts.current(sdkVersion: sdkVersion, isDebugBuild: isDebugBuild),
             embedded: AppBundleEmbeddedBundle(manifest: configuration.embeddedBundleManifest, rootDirectory: CordovaBundleLoader.embeddedDirectory),
             loader: loader,
             listener: self)
