@@ -23,7 +23,9 @@ Every native build writes `www/hotcodepush.json` into the app; an Xcode archive 
 document.addEventListener('deviceready', async () => {
   const result = await HotCodePush.sync();
   if (result.status === 'downloaded') {
-    console.log(`release #${result.release.number} applies at ${result.applyStrategy}`);
+    console.log(
+      `release #${result.release.number} applies at ${result.applyStrategy}`,
+    );
   }
 });
 ```
