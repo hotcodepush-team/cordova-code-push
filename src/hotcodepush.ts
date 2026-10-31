@@ -11,10 +11,7 @@ interface NativeEvent {
 
 const SERVICE = 'HotCodePush';
 
-/**
- * The options each method takes, checked before the call reaches the native side, so both platforms refuse any other
- * shape alike: a programming mistake, which rejects with the plain error.
- */
+// Checked before the native call, so both platforms reject any other shape alike, as a programming mistake.
 const OPTIONS_SHAPES = {
   downloadUpdate: {
     description:
@@ -69,15 +66,9 @@ const OPTIONS_SHAPES = {
 
 const listenersByEventName = new Map<HotCodePushEventName, Set<Listener>>();
 
-/**
- * The rollback held until the web layer listens: it is reported by the start that follows it, before the reloaded app
- * has added its listener.
- */
+// The start after a rollback reports it before the reloaded app adds its listener, so it waits here.
 let retainedUpdateRolledBack: unknown;
 
-/**
- * The plugin as Cordova clobbers it onto `window.HotCodePush`: every method is one call into the native core.
- */
 const hotCodePush: HotCodePushPlugin = {
   addListener: (eventName, listener) => {
     const listeners = listenersByEventName.get(eventName) ?? new Set();
@@ -144,7 +135,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** An object of the named keys alone, each absent or a string. */
 function isRecordOfOptionalStrings(
   value: unknown,
   keys: readonly string[],
@@ -172,16 +162,11 @@ function dispatchNativeEvent({ data, eventName }: NativeEvent): void {
   }
 }
 
-/**
- * The one callback the native side keeps for the life of the page and answers every event on.
- */
 function listenToNativeEvents(): void {
   exec(dispatchNativeEvent, () => undefined, SERVICE, 'listen', []);
 }
 
-/**
- * The readiness signal `render`: the first frame the app paints after the bundle loaded.
- */
+// Drives the `render` readiness signal.
 function notifyRenderedOnFirstFrame(): void {
   const notify = () =>
     requestAnimationFrame(

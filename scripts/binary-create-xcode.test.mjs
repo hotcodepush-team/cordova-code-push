@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 const APP_NAME = 'App.app';
 
-// The plist Xcode's Info.plist processing leaves in the app, converted to the binary format it writes; the values are invented.
+// Xcode writes the processed Info.plist in binary format. The values are invented.
 const PROCESSED_INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -26,13 +26,13 @@ const PROCESSED_INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
-// npx as the script finds it beside Node: it records the arguments, one per line, instead of running the CLI.
+// Stands in for npx beside Node and records the arguments, one per line, instead of running the CLI.
 const RECORDING_NPX =
   '#!/bin/sh\nprintf "%s\\n" "$@" > "$(dirname "$0")/arguments"\n';
 
 const SCRIPT_PATH = join(import.meta.dirname, 'binary-create-xcode.sh');
 
-// The script runs inside Xcode, which runs on macOS alone, as does PlistBuddy.
+// Xcode and PlistBuddy run only on macOS.
 describe(
   'binary-create-xcode.sh',
   { skip: process.platform !== 'darwin' },
@@ -144,10 +144,6 @@ describe(
       );
     });
 
-    /**
-     * Runs the script with the build settings Xcode gives a phase of the app target and returns the arguments it ran
-     * the CLI with.
-     */
     function runScript(buildSettings) {
       execFileSync('/bin/sh', [SCRIPT_PATH], {
         env: {

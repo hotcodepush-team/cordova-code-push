@@ -10,7 +10,6 @@ private let isDebugBuild = true
 private let isDebugBuild = false
 #endif
 
-/// The Cordova bridge over the shared core: every action is one call into the core, every answer one JSON object.
 @objc(HotCodePushPlugin)
 public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     private static let retainedEventName = "updateRolledBack"
@@ -19,11 +18,10 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     private var core: Core?
     private var eventCallbackId: String?
     private var loader: CordovaBundleLoader?
-    /// What every call rejects with while there is no core: the resource file is missing, or the core's reader refused it.
     private var notConfiguredMessage = Configuration.missingMessage
     private var retainedEvent: [String: Any]?
 
-    /// Cordova calls it in `viewDidLoad` and loads the start page right after, so the start decides first which bundle that page comes from.
+    // Cordova calls this in `viewDidLoad` and loads the start page right after, so the start decides first which bundle serves it.
     override public func pluginInitialize() {
         let configuration: Configuration?
         do {
@@ -51,23 +49,19 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         loader.beginServing(bundleId: core.handleAppStartBlocking())
     }
 
-    /// A page started: the callback the events went to belongs to the page that is gone. A page the SDK did not load —
-    /// `location.reload()`, a navigation, the recovery from a web content crash — is not reported to the core: what runs
-    /// and when it is gated is the process start's.
+    // A page start the SDK did not request, such as `location.reload()` or a web content crash recovery, is not reported to the core.
+    // The process start alone decides what runs and gates it.
     override public func onReset() {
         eventCallbackId = nil
     }
 
-    /// The SDK's own reload, on the main thread: the departing page loses its callback first, so an event the core sends
-    /// with the reload, a rollback's above all, is kept for the page that follows.
+    // Runs on the main thread. The departing page loses its callback first,
+    // so an event sent with the reload, above all a rollback, waits for the next page.
     private func reloadStartPage() {
         eventCallbackId = nil
         viewController?.loadStartPage()
     }
 
-    // MARK: The served bundle
-
-    /// A request for the running bundle's own files is answered from its directory; Cordova answers the rest from the binary.
     public func overrideSchemeTask(_ task: WKURLSchemeTask) -> Bool {
         guard let url = task.request.url, let servedFile = loader?.servedFile(forRequestPath: url.path) else {
             return false
@@ -79,8 +73,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     public func stop(_ task: WKURLSchemeTask) {
         responder.stop(task)
     }
-
-    // MARK: Actions
 
     @objc(applyUpdate:) func applyUpdate(_ command: CDVInvokedUrlCommand) {
         run(command) { core in try Json.encodeObject(await core.applyUpdate()) }
@@ -113,7 +105,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         run(command) { core in try Json.encodeObject(await core.getState()) }
     }
 
-    /// The one callback the web layer registers for the life of the page; every event is answered on it.
     @objc(listen:) func listen(_ command: CDVInvokedUrlCommand) {
         eventCallbackId = command.callbackId
         if let retainedEvent = retainedEvent {
@@ -198,14 +189,10 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         run(command) { core in try Json.encodeObject(await core.sync(trigger: .manual, options: HotCodePushPlugin.syncOptions(from: HotCodePushPlugin.options(of: command)))) }
     }
 
-    // MARK: The bridge
-
-    /// The one options object every method takes, empty when the web layer passed none.
     private static func options(of command: CDVInvokedUrlCommand) -> [String: Any] {
         return command.argument(at: 0) as? [String: Any] ?? [:]
     }
 
-    /// Each stage's strategy for this call; a value outside its choices is a programming mistake and rejects the call.
     private static func syncOptions(from options: [String: Any]) throws -> SyncOptions {
         return SyncOptions(
             applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
@@ -213,7 +200,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
             mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
     }
 
-    /// The apply strategies for this call; the download strategy is pinned to `auto`.
     private static func downloadUpdateOptions(from options: [String: Any]) throws -> DownloadUpdateOptions {
         return DownloadUpdateOptions(
             applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
@@ -226,7 +212,6 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         return value
     }
 
-    /// Answers the body's result, or an empty success when an action that returns nothing ends its body in `nil`.
     private func run(_ command: CDVInvokedUrlCommand, _ body: @escaping (Core) async throws -> [String: Any]?) {
         guard let core = core else {
             reject(command, notConfiguredMessage)
@@ -274,7 +259,7 @@ extension HotCodePushPlugin: CoreListener {
         send(event: ["eventName": eventName, "data": data])
     }
 
-    /// An event goes to the page's callback; a rollback is kept until the reloaded page listens, since it belongs to the start that follows it.
+    // A rollback belongs to the start that follows it, so it waits until the reloaded page listens.
     private func send(event: [String: Any]) {
         DispatchQueue.main.async {
             guard let callbackId = self.eventCallbackId else {

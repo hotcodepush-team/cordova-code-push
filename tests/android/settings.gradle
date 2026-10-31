@@ -1,6 +1,4 @@
-// The plugin's Kotlin built on its own, for its unit tests. plugin.xml copies the sources into the app, so this module
-// compiles them as the app does, over what the app gives them: the Cordova framework, the core and the Gradle
-// reference's dependencies.
+// Builds the plugin's Kotlin on its own for the unit tests, over the same dependencies the app gives it.
 pluginManagement {
     repositories {
         google()
@@ -12,7 +10,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // The core comes from core-android's maven branch until the library is on Maven Central.
         maven {
             url = 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
             content { includeGroup 'com.hotcodepush' }

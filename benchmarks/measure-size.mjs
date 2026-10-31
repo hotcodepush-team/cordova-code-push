@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// The binary size of a prepared demo variant: the release APK, signed with the debug keystore the demo's build.json
-// names, and the Release simulator `.app`, each in bytes, printed as JSON.
+// Measures the release APK and the Release simulator app of a prepared demo variant.
+// Prints both sizes in bytes as JSON.
 import { execFileSync } from 'node:child_process';
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,12 +11,12 @@ if (!target) {
   process.exit(2);
 }
 
-// A benchmark build is never shipped: offline, the build step writes the resource file without a channel and the
-// release build creates no binary, whether or not the machine holds a HotCodePush token.
+// A benchmark build is never shipped. Offline, the build step writes no channel and creates no binary,
+// even if the machine holds a HotCodePush token.
 const env = { ...process.env, HOTCODEPUSH_OFFLINE: '1' };
 
 const sizes = {};
-// Cordova's release build is an app bundle unless it is asked for the APK the baseline weighs.
+// The baseline weighs an APK, and a Cordova release build makes an app bundle by default.
 build(['android', '--release', '--', '--packageType=apk']);
 sizes.android = {
   releaseApkBytes: statSync(

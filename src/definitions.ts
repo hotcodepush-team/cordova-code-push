@@ -58,42 +58,54 @@ export interface HotCodePushListenerHandle {
 }
 
 /**
- * The Cordova plugin over the option, result and event types of `@hotcodepush/protocol`, every method returning a
- * promise.
+ * The HotCodePush Cordova plugin. Its option, result and event types come from `@hotcodepush/protocol`.
  */
 export interface HotCodePushPlugin {
   /**
-   * One cycle under the strategies, the same the SDK runs on its own at start,
-   * resume and interval, stopping at a `manual` gate for the app: fetch the
-   * index, evaluate it locally, download and verify, apply, report. A second
-   * call while one runs joins the running one.
+   * Runs one update cycle: fetch the index, evaluate it, download and verify, apply and report.
+   * The SDK runs the same cycle at start, resume and interval. It stops at a `manual` strategy.
+   * A second call while one runs joins the running one.
    */
   sync(options?: SyncOptions): Promise<SyncResult>;
-  /** `sync()` with `downloadStrategy` pinned to `manual`: fetch and evaluate, download nothing. */
+  /** Fetches and evaluates the index without downloading, like `sync()` with `downloadStrategy: 'manual'`. */
   checkForUpdate(): Promise<CheckForUpdateResult>;
-  /** `sync()` with `downloadStrategy` pinned to `auto`: re-check the index, a conditional GET, download and verify, apply per the apply strategies. */
+  /**
+   * Downloads and verifies the update, then applies it per the apply strategies.
+   * Works like `sync()` with `downloadStrategy: 'auto'`. The index check is a conditional GET.
+   */
   downloadUpdate(
     options?: DownloadUpdateOptions,
   ): Promise<DownloadUpdateResult>;
   /** Applies the downloaded update now, whatever the strategy says, and reloads the app. */
   applyUpdate(): Promise<ApplyUpdateResult>;
-  /** Ends the readiness gate when `readySignal` is `manual`; safe to call at any time on any setting. */
+  /** Ends the readiness gate when `readySignal` is `manual`. Safe to call at any time, on any setting. */
   notifyReady(): Promise<NotifyReadyResult>;
-  /** Rolls the running release back now, marks its bundle as failed on this device, reports `app_requested`, reloads. */
+  /**
+   * Rolls back the running release now and reloads the app.
+   * Marks its bundle as failed on this device and reports `app_requested`.
+   */
   rollbackUpdate(options?: RollbackUpdateOptions): Promise<void>;
-  /** Clears every downloaded update and the list of failed bundles, keeps the channel and the attributes, reloads. */
+  /**
+   * Clears all downloaded updates and the list of failed bundles, then reloads the app.
+   * Keeps the channel and the attributes.
+   */
   clearUpdates(): Promise<void>;
-  /** Restart gating: `isAllowed: false` holds the one restart the SDK would perform on its own — after an `immediate` apply, a `next_resume` apply or a mandatory release alike — until `isAllowed: true` runs it. A restart the app asks for itself, `applyUpdate()`, `rollbackUpdate()` or `clearUpdates()`, is never held. Not persisted: every start begins allowed. */
+  /**
+   * Holds or allows the restart the SDK performs on its own.
+   * `isAllowed: false` holds the restart after an `immediate` apply, a `next_resume` apply or a mandatory release.
+   * `isAllowed: true` then runs it. Restarts from `applyUpdate()`, `rollbackUpdate()` and `clearUpdates()` are never held.
+   * Not persisted: every start begins allowed.
+   */
   setRestartAllowed(options: SetRestartAllowedOptions): Promise<void>;
-  /** The SDK's state, a snapshot. */
+  /** Returns a snapshot of the SDK's state. */
   getState(): Promise<GetStateResult>;
-  /** The channel in effect with its source. */
+  /** Returns the channel in effect and its source. */
   getChannel(): Promise<GetChannelResult>;
-  /** Switches the device to a channel by name or by id; `null` clears the runtime choice. */
+  /** Switches the device to a channel by name or by id. `null` clears the runtime choice. */
   setChannel(options: SetChannelOptions): Promise<void>;
-  /** The facts of the device report. */
+  /** Returns the facts of the device report. */
   getDevice(): Promise<GetDeviceResult>;
-  /** Merges string attributes the app sets for `attribute` conditions; a `null` value removes a key. */
+  /** Merges string attributes for `attribute` conditions. A `null` value removes the key. */
   setAttributes(options: SetAttributesOptions): Promise<void>;
   /** Opens the SDK's native debug screen. */
   showDebugScreen(): Promise<void>;
@@ -106,7 +118,7 @@ export interface HotCodePushPlugin {
 
 declare global {
   /**
-   * The plugin, there once `deviceready` has fired; `window.HotCodePush` is the same object.
+   * The plugin, available once `deviceready` has fired.
    */
   var HotCodePush: HotCodePushPlugin;
 }
