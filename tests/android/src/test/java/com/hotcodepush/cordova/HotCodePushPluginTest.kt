@@ -22,7 +22,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** A call's options and its answer, over a plugin Cordova initialized on a core that records its calls. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class HotCodePushPluginTest {
@@ -65,7 +64,6 @@ class HotCodePushPluginTest {
         )
     }
 
-    /** The plugin as Cordova initializes it in an app whose assets hold a valid resource file. */
     private fun initializePlugin() {
         val context = contextWithResourceFile()
         val cordova = mock(CordovaInterface::class.java)
@@ -82,7 +80,7 @@ class HotCodePushPluginTest {
     }
 
     companion object {
-        /** How long a test waits for a call's coroutine, which runs on the IO dispatcher. */
+        // Calls run on the IO dispatcher, so a test waits for them.
         const val CALL_TIMEOUT_MILLIS = 5_000L
 
         const val RESOURCE_FILE =

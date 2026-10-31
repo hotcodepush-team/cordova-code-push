@@ -12,10 +12,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.File
 
-/**
- * The loader's answer to Cordova's asset loader, over the plugin's own store and bundles laid out by path under the store,
- * as the core leaves them: which requests a bundle answers, with which file, and which it leaves to Cordova.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class CordovaBundleLoaderTest {
@@ -162,7 +158,7 @@ class CordovaBundleLoaderTest {
         }
     }
 
-    /** A file answered as Cordova's own handler answers one: its bytes, and no status of its own, which the WebView sends as 200. */
+    // Like Cordova's own handler, the response sets no status, and the WebView sends 200.
     private fun assertServed(content: String, response: WebResourceResponse?) {
         assertEquals(0, response?.statusCode)
         assertEquals(content, response?.data?.use { it.readBytes().decodeToString() })

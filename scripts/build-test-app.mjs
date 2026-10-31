@@ -11,10 +11,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// The check that the plugin compiles and its build step lands: a fresh Cordova app in a temporary directory, the
-// platform at the version this repository pins or the one named, the plugin added from this checkout, on iOS a signed
-// store build into that platform, both restored by `cordova prepare` as on a fresh clone of the app, a debug build, and
-// hotcodepush.json in each built app's www; a stand-in for the CLI writes the file.
+// Checks that the plugin compiles and its build step writes hotcodepush.json, in a fresh Cordova app.
 // Usage: node scripts/build-test-app.mjs android|ios [platform version]
 
 const APP_NAME = 'Verify';
@@ -39,7 +36,7 @@ const appDirectory = join(
   'app',
 );
 
-// The CLI as the build step finds it through npx: it writes an empty resource file where it is told to.
+// The build step finds this stand-in through npx. It writes an empty resource file.
 const CLI_STAND_IN = `#!/usr/bin/env node
 const { mkdirSync, writeFileSync } = require('node:fs');
 const { dirname } = require('node:path');
@@ -52,10 +49,7 @@ function run(args, cwd) {
   execFileSync(cordova, args, { cwd, stdio: 'inherit' });
 }
 
-/**
- * The app in the state a fresh clone of it is in: platforms and plugins are not committed, so the first
- * `cordova prepare`, naming no platform, restores them from package.json.
- */
+// An app's platforms and plugins are not committed, so the first `cordova prepare` restores them from package.json.
 function restoreAsFreshClone() {
   for (const directoryName of ['platforms', 'plugins']) {
     rmSync(join(appDirectory, directoryName), { recursive: true });
@@ -71,11 +65,8 @@ function installCliStandIn() {
   });
 }
 
-/**
- * A store build into the platform the plugin was just added to, signed as `build.json` asks: cordova-ios writes the
- * signing style into the project it parsed before the hook added the phase. Xcode signs nothing and the build exports
- * nothing, so the check needs no certificate.
- */
+// A signed build makes cordova-ios write back the project it parsed before the hook added the phase.
+// Xcode signs and exports nothing, so the check needs no certificate.
 function buildIosStoreArchive() {
   writeFileSync(
     join(appDirectory, 'build.json'),
@@ -142,7 +133,7 @@ try {
     }
   }
   restoreAsFreshClone();
-  // `compile`, not `build`: a build prepares the platform again, which would hide a build step the restore missed.
+  // A `build` would prepare the platform again and hide a build step that the restore missed.
   run(
     [
       'compile',

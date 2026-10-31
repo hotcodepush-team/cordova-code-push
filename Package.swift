@@ -1,7 +1,7 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-// The package and its product carry the plugin's id: cordova-ios adds a Swift package plugin to the app under that name.
+// cordova-ios adds a Swift package plugin to the app under the plugin id, so the package and its product carry it.
 let package = Package(
     name: "@hotcodepush/cordova-code-push",
     platforms: [.iOS(.v15)],

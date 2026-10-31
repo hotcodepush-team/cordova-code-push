@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Cold-start milliseconds of a prepared demo variant: from the launch to the web view's first paint —
-// the moment the demo takes on its first animation frame and logs as `[baseline] first paint <epoch ms>` —
-// median of N cold launches on the Pixel_9_Pro emulator and the iPhone simulator, both on debug builds so
-// the web view's console reaches the host, each on a fresh install. Prints JSON with every run.
+// Measures the cold start of a prepared demo variant, from launch to the first paint the demo logs.
+// Prints the median of N fresh-install launches per platform as JSON.
 import { execFileSync, spawn } from 'node:child_process';
 import { join } from 'node:path';
 
@@ -64,8 +62,8 @@ async function measureAndroid() {
 }
 
 async function measureIos() {
-  // A Debug build, as on Android; Cordova's logger sends the web view's console to the process's output.
-  // The console arrives through a pseudo-terminal: a pipe would buffer the process's output until it exits.
+  // Debug builds send the web view console to the process output.
+  // The launch reads it through a pseudo-terminal, because a pipe buffers the output until the process exits.
   build(['ios', '--debug', '--emulator']);
   simctl('uninstall', iosUdid, bundleId);
   simctl(
@@ -127,8 +125,8 @@ function adb(...commandArgs) {
       timeout: 60_000,
     });
   } catch (error) {
-    // `pidof` exits with 1 when no process runs, which is the answer the stop waits for,
-    // and `uninstall` fails for an app that is not installed, which is the state it is asked for.
+    // `pidof` exits with 1 when no process runs, and `uninstall` fails when the app is missing.
+    // Both are the state the caller waits for.
     if (commandArgs[1] === 'pidof' || commandArgs[0] === 'uninstall') return '';
     throw error;
   }
@@ -145,7 +143,7 @@ function simctl(...commandArgs) {
   }
 }
 
-/** The moment the demo painted, on the device's clock, which the simulator shares with the host. */
+// The simulator shares the host clock, so this time compares with `Date.now()`.
 function paintedAtOf(text) {
   const match = marker.exec(text);
   if (!match) throw new Error('the first paint was not logged');

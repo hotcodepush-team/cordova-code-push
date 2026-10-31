@@ -22,8 +22,8 @@ const UPDATE_ROLLED_BACK_EVENT = {
   toRelease: null,
 };
 
-// The module as Cordova runs it: compiled to CommonJS and called as the factory `cordova.define` wraps a plugin's
-// module in, with the page's globals the module reaches handed in beside `require`.
+// Cordova runs a plugin module as the CommonJS factory that `cordova.define` wraps it in.
+// The page globals the module uses are passed in beside `require`.
 const MODULE_PARAMETERS = [
   'require',
   'exports',
@@ -292,9 +292,7 @@ describe('hotcodepush.ts', () => {
   });
 });
 
-/**
- * A page that loaded the plugin's module, over a Cordova bridge that records every native call for the test to answer.
- */
+// The Cordova bridge records every native call, so the test can answer it.
 function loadPage({ readyState = 'complete' } = {}) {
   const animationFrames = [];
   const loadListeners = [];

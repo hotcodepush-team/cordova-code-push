@@ -9,14 +9,11 @@ import com.hotcodepush.core.KeyValueStore
 import com.hotcodepush.core.NetworkMonitor
 import java.io.File
 
-/**
- * Cordova serves the app from `assets/www` through its asset loader, which asks the plugins first; the plugin answers
- * with the files of a bundle laid out by path under the store, so the bundle is served in the binary's place, on the same origin.
- * Until the start has decided, nothing is served and nothing reloads: the bundle the core loads is only recorded.
- */
+// Cordova's asset loader asks plugins first, so a bundle is served in place of `assets/www` on the same origin.
+// Until the start decides, nothing is served or reloaded.
 class CordovaBundleLoader(
     context: Context,
-    /** The core's own store, so the bundle to serve at the next start lies beside the state it belongs to. */
+    // The core's own store, so the served bundle is kept beside the state it belongs to.
     private val store: KeyValueStore,
     private val reloadStartPage: () -> Unit,
 ) : BundleLoader {
@@ -28,10 +25,7 @@ class CordovaBundleLoader(
 
     private var isServing = false
 
-    /**
-     * The start has decided: the page Cordova loads next is served from this bundle, `null` for the embedded one,
-     * and every bundle the core loads from now on reloads the page.
-     */
+    // `null` serves the embedded bundle. From now on, every bundle the core loads reloads the page.
     @Synchronized
     fun beginServing(bundleId: String?) {
         runningBundleId = bundleId
@@ -48,7 +42,6 @@ class CordovaBundleLoader(
         store.putString(SERVED_BUNDLE_KEY, bundleId)
     }
 
-    /** Before the start has decided, the bundle is persisted for the page about to load; once a page is served, it reloads. */
     override fun loadServedBundle(bundleId: String?) {
         persistServedBundle(bundleId)
         synchronized(this) {
@@ -58,16 +51,12 @@ class CordovaBundleLoader(
         reloadStartPage()
     }
 
-    /** Before the start has decided, the bundle persisted to serve, which the start adopts when it is the one waiting. */
     @Synchronized
     override fun servedBundleId(): String? = if (isServing) runningBundleId else persistedBundleId()
 
     override fun isConnectionMetered(): Boolean = networkMonitor.isConnectionMetered()
 
-    /**
-     * The answer to a request for the app's own path while a bundle runs; `null` leaves the request to Cordova,
-     * which is every request under the embedded bundle and the framework's own files under any.
-     */
+    // `null` leaves the request to Cordova: under the embedded bundle, and for the framework files under any bundle.
     fun handleRequest(path: String): WebResourceResponse? {
         val bundleId = runningBundleId ?: return null
         if (isFrameworkPath(path)) return null
@@ -80,10 +69,10 @@ class CordovaBundleLoader(
         return WebResourceResponse(mimeType(file), null, file.inputStream())
     }
 
-    /** What `cordova prepare` adds to the app's own files: the bridge of the binary's plugins, never a bundle's. */
+    // `cordova prepare` writes these files for the binary's plugins, so a bundle never serves them.
     private fun isFrameworkPath(path: String) = path in FRAMEWORK_FILE_PATHS || path.startsWith(FRAMEWORK_PLUGINS_PREFIX)
 
-    /** The types the web layer loads strictly by come first; the rest is the system's table, as Cordova's own handler reads it. */
+    // The web layer checks these types strictly. The rest come from the system table, as in Cordova's own handler.
     private fun mimeType(file: File): String = when (val extension = file.extension.lowercase()) {
         "js", "mjs" -> "application/javascript"
         "wasm" -> "application/wasm"
@@ -91,7 +80,6 @@ class CordovaBundleLoader(
         else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
     }
 
-    /** The bundle the last run left to serve, as long as its directory is still there. */
     private fun persistedBundleId(): String? = store.getString(SERVED_BUNDLE_KEY)?.takeIf { projectionDirectory(it).isDirectory }
 
     companion object {
