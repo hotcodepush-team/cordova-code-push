@@ -2,9 +2,7 @@ import HotCodePushCore
 import XCTest
 @testable import HotCodePushCordova
 
-/// `CordovaBundleLoader.servedFile(forRequestPath:)`: which requests a running bundle answers, with which of its files,
-/// and which it leaves to Cordova. The path is the request URL's `path`, as the plugin passes it: percent-decoded, with its leading slash.
-/// `isConnectionMetered()`: read under the lock the path monitor writes under, which the Thread Sanitizer of the shared scheme checks.
+// Request paths are the URL's `path` as the plugin passes it: percent-decoded, with a leading slash.
 final class CordovaBundleLoaderTests: XCTestCase {
     private let loader = CordovaBundleLoaderTests.makeLoader()
 
@@ -110,7 +108,8 @@ final class CordovaBundleLoaderTests: XCTestCase {
         assertServedFile(servedFile, equals: .file(bundleFile("index.html", bundleId: "b1")))
     }
 
-    /// A loader started here, so its monitor delivers the first path on its own queue while the state is read; only a race fails, under the sanitizer.
+    // The new loader's monitor writes its first path on its own queue while the test reads.
+    // Only a race fails this test, under the shared scheme's Thread Sanitizer.
     func testShouldReadTheMeteredStateWhileThePathMonitorWritesIt() {
         let startedLoader = CordovaBundleLoaderTests.makeLoader()
         let deadline = Date().addingTimeInterval(0.5)
@@ -127,7 +126,7 @@ final class CordovaBundleLoaderTests: XCTestCase {
         return CordovaBundleLoader(store: UserDefaultsStore(defaults: UserDefaults(suiteName: "CordovaBundleLoaderTests")!), startPage: "index.html", reloadStartPage: {})
     }
 
-    /// `ServedFile` is not Equatable: a file compares by its path.
+    // `ServedFile` is not Equatable, so files compare by path.
     private func assertServedFile(_ actual: ServedFile?, equals expected: ServedFile, file: StaticString = #filePath, line: UInt = #line) {
         switch (actual, expected) {
         case let (.file(actualURL)?, .file(expectedURL)):

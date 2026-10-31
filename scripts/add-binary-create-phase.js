@@ -3,16 +3,16 @@ const { join } = require('node:path');
 
 const APP_TARGET_NAME = 'App';
 
-// The script reads the version and build from the built app's processed Info.plist: declared as the phase's input,
-// Xcode processes the plist before it runs the phase.
+// The script reads the version and build from the processed Info.plist.
+// As the phase's input, Xcode processes the plist before it runs the phase.
 const INFO_PLIST_INPUT_PATH = '"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)"';
 
 const PHASE_MARKER = 'binary-create-xcode.sh';
 
 const PHASE_NAME = 'Create HotCodePush binary';
 
-// The lines of the phase as a pbxproj string carries them, the line breaks escaped. The script runs from Cordova's copy
-// of the plugin, two levels above the platform's Xcode project.
+// A pbxproj string escapes its line breaks.
+// Cordova copies the plugin to `plugins/`, two levels above the platform's Xcode project.
 const PHASE_SCRIPT = [
   'set -e',
   '',
@@ -21,28 +21,20 @@ const PHASE_SCRIPT = [
   '',
 ].join('\\n');
 
-/**
- * The build step on iOS, run by Cordova after every prepare, the one `cordova platform add` runs included: Cordova has
- * no `plugin.xml` element for a build phase, so the hook adds the phase that runs the CLI to the generated Xcode
- * project. The hook runs for every platform and acts when iOS is among the prepared ones; `opts.cordova.platforms` is
- * no guide, as a fresh checkout's first prepare lists it before restoring the platforms.
- */
+// `plugin.xml` has no element for a build phase, so this hook adds it after every prepare.
+// It checks `opts.platforms`, because a fresh checkout's first prepare lists `opts.cordova.platforms` before restoring them.
 module.exports = function addBinaryCreatePhaseToPlatform(context) {
   if (!context.opts.platforms.includes('ios')) {
     return;
   }
-  // cordova-ios keys the project it parses by the platform's real path, as the CLI resolves it
+  // cordova-ios keys the parsed project by the platform's real path, as the CLI resolves it.
   addBinaryCreatePhase(
     realpathSync(join(context.opts.projectRoot, 'platforms', 'ios')),
   );
 };
 
-/**
- * Appends the run-script phase to the app target after its last phase, once the app's www is copied into the app; the
- * phase already there is left alone, so the hook runs on every prepare. The phase goes into the project cordova-ios
- * parsed: it keeps that project for the whole CLI run and writes it back at a signed build's signing step, which would
- * drop a phase written to the file alone.
- */
+// The phase goes last, after Cordova copies www into the app.
+// It goes into the project cordova-ios parsed, because cordova-ios writes that project back when it signs a build.
 function addBinaryCreatePhase(platformRoot) {
   const locations = {
     pbxproj: join(platformRoot, 'App.xcodeproj', 'project.pbxproj'),
@@ -63,16 +55,13 @@ function addBinaryCreatePhase(platformRoot) {
       shellScript: PHASE_SCRIPT,
     },
   );
-  // the CLI writes hotcodepush.json, which carries the build's time, on every build; a phase without outputs
-  // that is not marked so makes Xcode warn
+  // The CLI writes hotcodepush.json with the build time on every build.
+  // Xcode warns about a phase without outputs unless it is marked so.
   buildPhase.alwaysOutOfDate = 1;
   project.write();
 }
 
-/**
- * cordova-ios's module that parses the project once per CLI run and writes it, resolved as the platform's Api.js
- * resolves cordova-ios, so the hook shares the CLI's instance.
- */
+// Resolved from the platform, as its Api.js resolves cordova-ios, so the hook shares the CLI's parsed project.
 function requireCordovaProjectFile(platformRoot) {
   return require(
     require.resolve('cordova-ios/lib/projectFile', {

@@ -1,6 +1,5 @@
-// The plugin's part of the app's build.gradle, which Cordova applies from plugin.xml: the core, and the build step. For
-// every variant, the task below runs the CLI over the platform's www, which Cordova's prepare copied, writes
-// hotcodepush.json into the variant's www assets and, for a store build (a build type other than debug), creates the binary.
+// Cordova applies this file to the app's build.gradle from plugin.xml.
+// Any build type other than debug is a store build, which creates the binary.
 
 import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -65,8 +64,7 @@ androidComponents.onVariants(androidComponents.selector().all()) { variant ->
         // The Cordova project, two levels above the platform's Gradle project.
         it.projectRoot.set(rootProject.layout.projectDirectory.dir('../..'))
         it.wwwDirectory.set(layout.projectDirectory.dir('src/main/assets/www'))
-        // The resource file carries the build's time as the floor and a store build creates its binary on every run: the
-        // step never counts as up to date.
+        // The resource file carries the build time, and a store build creates its binary on every run.
         it.outputs.upToDateWhen { false }
     }
     variant.sources.assets.addGeneratedSourceDirectory(binaryCreateTask) { it.outputDirectory }

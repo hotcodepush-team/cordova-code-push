@@ -2,15 +2,13 @@ import Foundation
 import UniformTypeIdentifiers
 import WebKit
 
-/// Answers a scheme task with a file the way Cordova's own handler answers from the binary: the type from the extension,
-/// no caching, byte ranges for media, and nothing sent to a task the web view has stopped.
+// Mirrors how Cordova's own scheme handler answers from the binary.
 final class ServedFileResponder {
     private struct ByteRange {
         let offset: UInt64
         let length: Int
     }
 
-    /// What a `Range` header asks of a file: the whole of it, a part of it, or a range the file cannot satisfy.
     private enum RequestedRange {
         case wholeFile
         case part(ByteRange)
@@ -19,10 +17,10 @@ final class ServedFileResponder {
 
     private static let chunkSize = 4 * 1024 * 1024
     private static let fallbackMimeType = "application/octet-stream"
-    /// The types the web layer loads strictly by, which the system's type table does not always know.
+    // The web layer checks these types strictly, and the system type table does not always know them.
     private static let mimeTypesByExtension = ["js": "text/javascript", "mjs": "text/javascript", "wasm": "application/wasm"]
 
-    /// The tasks still wanted, touched on the main thread only, where WebKit starts and stops them.
+    // Main thread only, where WebKit starts and stops the tasks.
     private var activeTasks = Set<ObjectIdentifier>()
     private let readQueue = DispatchQueue(label: "com.hotcodepush.cordova.served-files", qos: .userInitiated)
 
@@ -63,8 +61,8 @@ final class ServedFileResponder {
         activeTasks.remove(ObjectIdentifier(task))
     }
 
-    /// Reads off the main thread and hands every chunk back on it, where a stop is seen before the next callback.
-    /// A read that fails ends the task with its error, as Cordova's own handler does: the response is already sent.
+    // Chunks go back to the main thread, where a stop is seen before the next callback.
+    // The response is already sent, so a failed read ends the task with its error, as in Cordova's own handler.
     private func send(_ range: ByteRange, of handle: FileHandle, to task: WKURLSchemeTask) {
         let result = Result { try sendChunks(range, of: handle, to: task) }
         handle.closeFile()
@@ -120,15 +118,13 @@ final class ServedFileResponder {
         return UTType(filenameExtension: pathExtension)?.preferredMIMEType ?? fallbackMimeType
     }
 
-    /// Up to `count` bytes, none at the end of the file; a read that fails throws.
     static func readChunk(of handle: FileHandle, upToCount count: Int) throws -> Data {
         return try handle.read(upToCount: count) ?? Data()
     }
 
-    /// The range a `Range: bytes=` header asks per RFC 9110, `<start>-<end>`, `<start>-` or `-<length>`, clamped to the file.
-    /// A range starting at or past the file's end, ending before its start, or of no bytes is unsatisfiable.
-    /// The whole file answers a header that does not parse, several ranges rather than a multipart body,
-    /// and a suffix of an empty file, which no `Content-Range` can express.
+    // Parses `bytes=<start>-<end>`, `bytes=<start>-` and `bytes=-<length>` per RFC 9110, clamped to the file.
+    // Unparsable headers and multiple ranges get the whole file, which avoids a multipart body.
+    // An empty file's suffix range also gets the whole file, because no `Content-Range` can express it.
     private static func requestedRange(of request: URLRequest, fileSize: Int) -> RequestedRange {
         guard let header = request.value(forHTTPHeaderField: "Range"), header.hasPrefix("bytes="), !header.contains(",") else {
             return .wholeFile

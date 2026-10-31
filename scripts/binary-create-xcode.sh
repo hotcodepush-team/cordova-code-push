@@ -1,16 +1,14 @@
 #!/bin/sh
-# The build step of the Xcode build, run by the "Create HotCodePush binary" phase the plugin's hook adds to the app
-# target: the CLI hashes the platform's www, which Cordova's prepare copied, writes hotcodepush.json into the app's www
-# and, in a store build, creates the binary. The phase holds one line; what it runs lives here.
+# Run by the "Create HotCodePush binary" phase that the plugin's hook adds to the app target.
+# Writes hotcodepush.json into the built app's www and, in a store build, creates the binary.
 set -e
 
 PROJECT_ROOT="$SRCROOT/../.."
-# The built app's www, where the target builds its product: an archive installs it apart from the configuration's directory.
+# An archive installs the product outside the configuration's build directory, so the path follows TARGET_BUILD_DIR.
 DEST="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/www"
 
-# The store build is an archive, which Xcode marks with DEPLOYMENT_POSTPROCESSING, the setting behind "Run script only
-# when installing": it creates the binary under the version and build the device reports, from the built app's processed
-# Info.plist, where Cordova's version and build arrive. A Run or a plain build writes the resource file alone.
+# Xcode sets DEPLOYMENT_POSTPROCESSING for an archive, which is the store build.
+# The processed Info.plist holds the version and build that the device reports.
 if [ "$DEPLOYMENT_POSTPROCESSING" = "YES" ]; then
   INFO_PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
   BINARY_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST")
@@ -24,14 +22,14 @@ has_node() {
   command -v node > /dev/null 2>&1
 }
 
-# The path below each Homebrew prefix: the one HOMEBREW_PREFIX names, else Apple silicon's and then Intel's.
+# HOMEBREW_PREFIX overrides the default prefixes of Apple silicon and Intel Macs.
 homebrew_paths() {
   for HOMEBREW in ${HOMEBREW_PREFIX:-/opt/homebrew /usr/local}; do
     echo "$HOMEBREW/$1"
   done
 }
 
-# The first of nvm, fnm, Volta, asdf and Homebrew that has a node, the places a Mac's Node usually comes from.
+# Tries nvm, fnm, Volta, asdf and Homebrew in turn, where a Mac's Node usually comes from.
 find_node() {
   NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   for NVM_SCRIPT in "$NVM_DIR/nvm.sh" $(homebrew_paths opt/nvm/nvm.sh); do
@@ -57,8 +55,7 @@ find_node() {
 
 cd "$PROJECT_ROOT"
 
-# Xcode's PATH has no Node. The Xcode project's .xcode.env names it, as React Native's does, .xcode.env.local over it;
-# a build started from a shell has it on the PATH already.
+# Xcode's PATH has no Node. As in React Native, .xcode.env names it and .xcode.env.local overrides that.
 NODE_BINARY=$(command -v node || true)
 if [ -f "$SRCROOT/.xcode.env" ]; then . "$SRCROOT/.xcode.env"; fi
 if [ -f "$SRCROOT/.xcode.env.local" ]; then . "$SRCROOT/.xcode.env.local"; fi

@@ -15,7 +15,6 @@ import cordovaProjectFile from 'cordova-ios/lib/projectFile.js';
 import xcode from 'xcode';
 import addBinaryCreatePhaseToPlatform from './add-binary-create-phase.js';
 
-// The cordova-ios this repository builds against, which the test app's platform resolves as an app's platform does.
 const CORDOVA_IOS_PATH = join(
   import.meta.dirname,
   '..',
@@ -23,7 +22,6 @@ const CORDOVA_IOS_PATH = join(
   'cordova-ios',
 );
 
-// The project `cordova platform add ios` generates, from that cordova-ios.
 const TEMPLATE_PATH = join(CORDOVA_IOS_PATH, 'templates', 'project');
 
 describe('add-binary-create-phase.js', () => {
@@ -77,12 +75,12 @@ describe('add-binary-create-phase.js', () => {
   });
 
   it('should keep the phase when cordova-ios writes the project it parsed before the hook, as a signed build does', () => {
-    // the locations cordova-ios's build parses the project at, under the platform's real path, as the CLI resolves it
+    // The CLI resolves the platform's real path, and cordova-ios keys the parsed project by it.
     const locations = {
       pbxproj: realpathSync(projectFilePath),
       root: realpathSync(platformRoot),
     };
-    // prepare parses the project before the hook runs, and a signed build's signing step writes it back after
+    // Prepare parses the project before the hook runs, and a signed build writes it back afterwards.
     cordovaProjectFile.parse(locations);
 
     addBinaryCreatePhaseToPlatform({
@@ -122,9 +120,6 @@ describe('add-binary-create-phase.js', () => {
   });
 });
 
-/**
- * The app target's build phases in their order, each with its name and its object.
- */
 function readPhases(projectFilePath) {
   const project = xcode.project(projectFilePath).parseSync();
   const objects = project.hash.project.objects;

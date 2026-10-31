@@ -2,8 +2,6 @@ import WebKit
 import XCTest
 @testable import HotCodePushCordova
 
-/// `ServedFileResponder.respond(to:with:)`: the status, the headers and the bytes a scheme task receives for a served file,
-/// with or without a `Range` header, and nothing after the web view stops the task; `readChunk(of:upToCount:)`, which throws where a read fails.
 final class ServedFileResponderTests: XCTestCase {
     private let responder = ServedFileResponder()
     private var directory: URL!
@@ -210,7 +208,7 @@ final class ServedFileResponderTests: XCTestCase {
         XCTAssertThrowsError(try ServedFileResponder.readChunk(of: writeOnlyHandle, upToCount: 4))
     }
 
-    /// Waits for the finish: the body is read on a background queue and handed to the task on the main queue.
+    // The body is read on a background queue and handed to the task on the main queue, so this waits for the end.
     private func respond(with servedFile: ServedFile, range: String? = nil) -> FakeSchemeTask {
         let task = FakeSchemeTask(request: request(range: range))
         responder.respond(to: task, with: servedFile)
@@ -231,7 +229,6 @@ final class ServedFileResponderTests: XCTestCase {
     }
 }
 
-/// Records what the responder sends; `ended` is fulfilled when the task finishes or fails.
 private final class FakeSchemeTask: NSObject, WKURLSchemeTask {
     let ended = XCTestExpectation(description: "the task finishes or fails")
     let request: URLRequest

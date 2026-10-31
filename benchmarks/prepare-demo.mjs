@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Copies the demo app into a scratch directory as one of the two variants the baseline compares:
-// `with` installs the plugin tarball, `without` removes the plugin, and with it its Gradle task and its Xcode phase,
-// and swaps the screen's script for the same screen with nothing behind it. Both log the moment of their first paint.
-// Neither is built here: the build step runs inside the native build, which the measuring scripts start.
+// Copies the demo app as one of the two variants the baseline compares, with or without the plugin.
+// Both variants log their first paint. The measuring scripts build them.
 import { execFileSync } from 'node:child_process';
 import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,8 +32,8 @@ cpSync(source, target, {
   filter: path => !excluded.has(path.split('/').pop()),
 });
 
-// The moment of the first frame, logged once `deviceready` has fired: Cordova hands the console to the host only
-// after it loaded its plugins, which the first frame of an app with a plugin comes before.
+// The log waits for `deviceready`, because Cordova forwards the console only after it loads its plugins.
+// That happens after the first frame of an app with a plugin.
 const firstPaintMarker =
   "requestAnimationFrame(() => { const paintedAt = Date.now(); document.addEventListener('deviceready', () => console.log(`[baseline] first paint ${paintedAt}`)); });";
 const versionLine = 'versionHeading.textContent = VERSION;';

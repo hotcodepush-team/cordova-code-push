@@ -79,5 +79,10 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
   }
 }
