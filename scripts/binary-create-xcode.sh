@@ -22,21 +22,30 @@ has_node() {
   command -v node > /dev/null 2>&1
 }
 
+# HOMEBREW_PREFIX overrides the default prefixes of Apple silicon and Intel Macs.
+homebrew_paths() {
+  for HOMEBREW in ${HOMEBREW_PREFIX:-/opt/homebrew /usr/local}; do
+    echo "$HOMEBREW/$1"
+  done
+}
+
 # Tries nvm, fnm, Volta, asdf and Homebrew in turn, where a Mac's Node usually comes from.
 find_node() {
   NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-  if [ -s "$NVM_DIR/nvm.sh" ]; then
-    . "$NVM_DIR/nvm.sh" --no-use
-    nvm use > /dev/null 2>&1 || nvm use default > /dev/null 2>&1 || true
-    if has_node; then return; fi
-  fi
-  for FNM_BINARY in "$HOME/.fnm/fnm" /opt/homebrew/bin/fnm /usr/local/bin/fnm; do
+  for NVM_SCRIPT in "$NVM_DIR/nvm.sh" $(homebrew_paths opt/nvm/nvm.sh); do
+    if [ -s "$NVM_SCRIPT" ]; then
+      . "$NVM_SCRIPT" --no-use
+      nvm use > /dev/null 2>&1 || nvm use default > /dev/null 2>&1 || true
+      if has_node; then return; fi
+    fi
+  done
+  for FNM_BINARY in "$HOME/.fnm/fnm" $(homebrew_paths bin/fnm); do
     if [ -x "$FNM_BINARY" ]; then
       eval "$("$FNM_BINARY" env)"
       if has_node; then return; fi
     fi
   done
-  for NODE_DIRECTORY in "$HOME/.volta/bin" "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" /opt/homebrew/bin /usr/local/bin; do
+  for NODE_DIRECTORY in "$HOME/.volta/bin" "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" $(homebrew_paths bin); do
     if [ -x "$NODE_DIRECTORY/node" ]; then
       PATH="$NODE_DIRECTORY:$PATH"
       return

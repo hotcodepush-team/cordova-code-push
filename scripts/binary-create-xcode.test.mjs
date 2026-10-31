@@ -144,6 +144,24 @@ describe(
       );
     });
 
+    it("should run the Node Homebrew's nvm selects on Intel, whose ~/.nvm holds no nvm.sh", () => {
+      const homebrewPrefix = join(projectRoot, 'usr', 'local');
+      mkdirSync(join(homebrewPrefix, 'opt', 'nvm'), { recursive: true });
+      writeFileSync(
+        join(homebrewPrefix, 'opt', 'nvm', 'nvm.sh'),
+        `nvm() { PATH="${nodeDirectoryPath}:$PATH"; }\n`,
+      );
+
+      assert.equal(
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'NO',
+          HOMEBREW_PREFIX: homebrewPrefix,
+          PATH: '/usr/bin:/bin',
+        })[0],
+        'hotcodepush',
+      );
+    });
+
     function runScript(buildSettings) {
       execFileSync('/bin/sh', [SCRIPT_PATH], {
         env: {
