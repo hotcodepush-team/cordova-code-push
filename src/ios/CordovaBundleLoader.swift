@@ -13,7 +13,6 @@ final class CordovaBundleLoader: BundleLoader {
     private static let persistedBundleKey = "hotcodepush.servedBundleId"
 
     private let lock = NSLock()
-    private let networkMonitor = NetworkMonitor()
     private let reloadStartPage: () -> Void
     private let startPage: String
     private let store: KeyValueStore
@@ -64,10 +63,6 @@ final class CordovaBundleLoader: BundleLoader {
         lock.lock()
         defer { lock.unlock() }
         return isServing ? runningBundleId : persistedBundleId()
-    }
-
-    func isConnectionMetered() -> Bool {
-        return networkMonitor.isConnectionMetered()
     }
 
     // `nil` leaves the request to Cordova: under the embedded bundle, and for the framework files under any bundle.

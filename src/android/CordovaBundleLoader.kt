@@ -6,7 +6,6 @@ import android.webkit.WebResourceResponse
 import com.hotcodepush.core.BundleLoader
 import com.hotcodepush.core.FileStore
 import com.hotcodepush.core.KeyValueStore
-import com.hotcodepush.core.NetworkMonitor
 import java.io.File
 
 // Cordova's asset loader asks plugins first, so a bundle is served in place of `assets/www` on the same origin.
@@ -17,7 +16,6 @@ class CordovaBundleLoader(
     private val store: KeyValueStore,
     private val reloadStartPage: () -> Unit,
 ) : BundleLoader {
-    private val networkMonitor = NetworkMonitor(context)
     private val projectionsDirectory = File(FileStore.defaultRootDirectory(context), "www")
 
     @Volatile
@@ -53,8 +51,6 @@ class CordovaBundleLoader(
 
     @Synchronized
     override fun servedBundleId(): String? = if (isServing) runningBundleId else persistedBundleId()
-
-    override fun isConnectionMetered(): Boolean = networkMonitor.isConnectionMetered()
 
     // `null` leaves the request to Cordova: under the embedded bundle, and for the framework files under any bundle.
     fun handleRequest(path: String): WebResourceResponse? {

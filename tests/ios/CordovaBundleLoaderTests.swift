@@ -108,16 +108,6 @@ final class CordovaBundleLoaderTests: XCTestCase {
         assertServedFile(servedFile, equals: .file(bundleFile("index.html", bundleId: "b1")))
     }
 
-    // The new loader's monitor writes its first path on its own queue while the test reads.
-    // Only a race fails this test, under the shared scheme's Thread Sanitizer.
-    func testShouldReadTheMeteredStateWhileThePathMonitorWritesIt() {
-        let startedLoader = CordovaBundleLoaderTests.makeLoader()
-        let deadline = Date().addingTimeInterval(0.5)
-        while Date() < deadline {
-            _ = startedLoader.isConnectionMetered()
-        }
-    }
-
     private func bundleFile(_ relativePath: String, bundleId: String) -> URL {
         return loader.projectionDirectory(bundleId: bundleId).appendingPathComponent(relativePath)
     }

@@ -120,8 +120,8 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
                 null
             }
             "downloadUpdate" -> run(callbackContext) { it.downloadUpdate(downloadUpdateOptions(options)).toJson() }
-            "getChannel" -> run(callbackContext) { it.channel().toJson() }
-            "getDevice" -> run(callbackContext) { it.deviceResult().toJson() }
+            "getChannel" -> run(callbackContext) { it.getChannel().toJson() }
+            "getDevice" -> run(callbackContext) { it.getDevice().toJson() }
             "getState" -> run(callbackContext) { it.getState().toJson() }
             "listen" -> listen(callbackContext)
             "notifyReady" -> run(callbackContext) { it.notifyReady().toJson() }

@@ -94,11 +94,11 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(getChannel:) func getChannel(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try Json.encodeObject(await core.channel()) }
+        run(command) { core in try Json.encodeObject(await core.getChannel()) }
     }
 
     @objc(getDevice:) func getDevice(_ command: CDVInvokedUrlCommand) {
-        run(command) { core in try Json.encodeObject(await core.deviceResult()) }
+        run(command) { core in try Json.encodeObject(await core.getDevice()) }
     }
 
     @objc(getState:) func getState(_ command: CDVInvokedUrlCommand) {

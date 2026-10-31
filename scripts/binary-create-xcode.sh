@@ -29,28 +29,36 @@ homebrew_paths() {
   done
 }
 
-# Tries nvm, fnm, Volta, asdf and Homebrew in turn, where a Mac's Node usually comes from.
+# Tries Homebrew, then nvm, fnm, Volta and asdf in turn, where a Mac's Node usually comes from.
 find_node() {
+  for NODE_DIRECTORY in $(homebrew_paths bin); do
+    if use_node_directory "$NODE_DIRECTORY"; then return; fi
+  done
   NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   for NVM_SCRIPT in "$NVM_DIR/nvm.sh" $(homebrew_paths opt/nvm/nvm.sh); do
     if [ -s "$NVM_SCRIPT" ]; then
+      export NVM_DIR
       . "$NVM_SCRIPT" --no-use
-      nvm use > /dev/null 2>&1 || nvm use default > /dev/null 2>&1 || true
+      nvm use >/dev/null 2>&1 || nvm use default >/dev/null 2>&1 || true
       if has_node; then return; fi
+      break
     fi
   done
-  for FNM_BINARY in "$HOME/.fnm/fnm" $(homebrew_paths bin/fnm); do
-    if [ -x "$FNM_BINARY" ]; then
-      eval "$("$FNM_BINARY" env)"
+  for FNM in "$(command -v fnm || true)" "$HOME/.fnm/fnm" "$HOME/Library/Application Support/fnm/fnm" $(homebrew_paths bin/fnm); do
+    if [ -x "$FNM" ]; then
+      eval "$("$FNM" env --shell bash)"
       if has_node; then return; fi
+      break
     fi
   done
-  for NODE_DIRECTORY in "$HOME/.volta/bin" "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" $(homebrew_paths bin); do
-    if [ -x "$NODE_DIRECTORY/node" ]; then
-      PATH="$NODE_DIRECTORY:$PATH"
-      return
-    fi
+  for NODE_DIRECTORY in "${VOLTA_HOME:-$HOME/.volta}/bin" "${ASDF_DATA_DIR:-$HOME/.asdf}/shims"; do
+    if use_node_directory "$NODE_DIRECTORY"; then return; fi
   done
+}
+
+use_node_directory() {
+  [ -x "$1/node" ] || return 1
+  PATH="$1:$PATH"
 }
 
 cd "$PROJECT_ROOT"

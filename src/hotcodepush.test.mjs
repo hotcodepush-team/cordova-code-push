@@ -44,31 +44,32 @@ const MODULE_SOURCE = transpileModule(
 
 const WRONG_OPTIONS = [
   ['downloadUpdate', null],
-  ['downloadUpdate', { downloadStrategy: 'auto' }],
   ['downloadUpdate', { applyStrategy: 1 }],
   ['rollbackUpdate', null],
   ['rollbackUpdate', { reason: 42 }],
-  ['rollbackUpdate', { cause: 'checkout' }],
   ['setAttributes', undefined],
   ['setAttributes', null],
   ['setAttributes', ['plan']],
   ['setAttributes', { plan: 3 }],
   ['setChannel', undefined],
   ['setChannel', {}],
-  ['setChannel', { id: 'c1', name: 'beta' }],
   ['setChannel', { id: 7 }],
+  ['setChannel', { id: '3b241101-e2bb-4255-8caf-4136c566a962', name: 7 }],
   ['setChannel', { channel: 'beta' }],
   ['setRestartAllowed', undefined],
   ['setRestartAllowed', {}],
   ['setRestartAllowed', { isAllowed: 'true' }],
-  ['setRestartAllowed', { isAllowed: true, isHeld: false }],
   ['sync', null],
-  ['sync', { checkStrategy: 'manual' }],
   ['sync', { applyStrategy: 2 }],
 ];
 
 const ACCEPTED_OPTIONS = [
   ['downloadUpdate', undefined, {}],
+  [
+    'downloadUpdate',
+    { applyStrategy: 'immediate', downloadStrategy: 'auto' },
+    { applyStrategy: 'immediate', downloadStrategy: 'auto' },
+  ],
   [
     'downloadUpdate',
     { applyStrategy: 'immediate', mandatoryApplyStrategy: 'manual' },
@@ -80,6 +81,7 @@ const ACCEPTED_OPTIONS = [
     { reason: 'checkout broke' },
     { reason: 'checkout broke' },
   ],
+  ['rollbackUpdate', { cause: 'checkout' }, { cause: 'checkout' }],
   [
     'setAttributes',
     { plan: 'pro', tenant: null },
@@ -91,10 +93,21 @@ const ACCEPTED_OPTIONS = [
     { id: '3b241101-e2bb-4255-8caf-4136c566a962' },
   ],
   ['setChannel', { name: 'beta' }, { name: 'beta' }],
+  [
+    'setChannel',
+    { id: '3b241101-e2bb-4255-8caf-4136c566a962', name: 'beta' },
+    { id: '3b241101-e2bb-4255-8caf-4136c566a962', name: 'beta' },
+  ],
   ['setChannel', null, {}],
   ['setRestartAllowed', { isAllowed: false }, { isAllowed: false }],
+  [
+    'setRestartAllowed',
+    { isAllowed: true, isHeld: false },
+    { isAllowed: true, isHeld: false },
+  ],
   ['sync', undefined, {}],
   ['sync', { downloadStrategy: 'manual' }, { downloadStrategy: 'manual' }],
+  ['sync', { checkStrategy: 'manual' }, { checkStrategy: 'manual' }],
 ];
 
 describe('hotcodepush.ts', () => {
