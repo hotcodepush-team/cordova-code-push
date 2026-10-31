@@ -55,7 +55,7 @@ if (variant === 'with') {
   writeFileSync(packagePath, `${JSON.stringify(manifest, null, 2)}\n`);
   writeFileSync(
     mainPath,
-    `// The baseline control: the same screen without the plugin.
+    `// The demo without the plugin: the same screen, nothing behind it — the baseline's control.
 const VERSION = 'v1';
 
 const versionHeading = getElement('version');

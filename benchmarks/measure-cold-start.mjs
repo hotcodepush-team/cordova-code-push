@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Measures the cold start of a prepared demo variant, from launch to the first paint the demo logs.
-// Prints the median of N fresh-install launches per platform as JSON.
+// Prints the median of N cold launches per platform as JSON, all after one fresh install.
 import { execFileSync, spawn } from 'node:child_process';
 import { join } from 'node:path';
 
