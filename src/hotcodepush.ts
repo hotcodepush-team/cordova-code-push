@@ -11,7 +11,8 @@ interface NativeEvent {
 
 const SERVICE = 'HotCodePush';
 
-// Checked before the native call, so both platforms reject any other shape alike, as a programming mistake.
+// Checked before the native call, so both platforms reject a wrong type alike, as a programming mistake.
+// Unknown keys are ignored, as the Capacitor and React Native bridges ignore them.
 const OPTIONS_SHAPES = {
   downloadUpdate: {
     description:
@@ -40,16 +41,13 @@ const OPTIONS_SHAPES = {
     description: '{ id: string }, { name: string } or null',
     matches: (options: unknown) =>
       options === null ||
-      (isRecord(options) &&
-        Object.keys(options).length === 1 &&
-        (typeof options.id === 'string' || typeof options.name === 'string')),
+      (isRecordOfOptionalStrings(options, ['id', 'name']) &&
+        (options.id !== undefined || options.name !== undefined)),
   },
   setRestartAllowed: {
     description: '{ isAllowed: boolean }',
     matches: (options: unknown) =>
-      isRecord(options) &&
-      Object.keys(options).length === 1 &&
-      typeof options.isAllowed === 'boolean',
+      isRecord(options) && typeof options.isAllowed === 'boolean',
   },
   sync: {
     description:
@@ -138,13 +136,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isRecordOfOptionalStrings(
   value: unknown,
   keys: readonly string[],
-): boolean {
+): value is Record<string, unknown> {
   return (
     isRecord(value) &&
-    Object.entries(value).every(
-      ([key, entry]) =>
-        keys.includes(key) &&
-        (entry === undefined || typeof entry === 'string'),
+    keys.every(
+      key => value[key] === undefined || typeof value[key] === 'string',
     )
   );
 }

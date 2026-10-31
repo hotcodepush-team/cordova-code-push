@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -162,10 +163,38 @@ describe(
       );
     });
 
+    it("should run Homebrew's Node before the one nvm selects when neither the PATH nor .xcode.env has one", () => {
+      const homebrewPrefix = join(projectRoot, 'opt', 'homebrew');
+      mkdirSync(homebrewPrefix, { recursive: true });
+      renameSync(nodeDirectoryPath, join(homebrewPrefix, 'bin'));
+      nodeDirectoryPath = join(homebrewPrefix, 'bin');
+      const nvmNodeDirectoryPath = join(projectRoot, 'nvm-node', 'bin');
+      mkdirSync(nvmNodeDirectoryPath, { recursive: true });
+      writeFileSync(join(nvmNodeDirectoryPath, 'node'), '#!/bin/sh\n', {
+        mode: 0o755,
+      });
+      mkdirSync(join(projectRoot, 'home', '.nvm'));
+      writeFileSync(
+        join(projectRoot, 'home', '.nvm', 'nvm.sh'),
+        `nvm() { PATH="${nvmNodeDirectoryPath}:$PATH"; }\n`,
+      );
+
+      assert.equal(
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'NO',
+          HOMEBREW_PREFIX: homebrewPrefix,
+          PATH: '/usr/bin:/bin',
+        })[0],
+        'hotcodepush',
+      );
+    });
+
     function runScript(buildSettings) {
       execFileSync('/bin/sh', [SCRIPT_PATH], {
         env: {
           HOME: join(projectRoot, 'home'),
+          // Keeps the machine's own Homebrew Node out of the lookup.
+          HOMEBREW_PREFIX: join(projectRoot, 'no-homebrew'),
           INFOPLIST_PATH: join(APP_NAME, 'Info.plist'),
           SRCROOT: sourceRoot,
           TARGET_BUILD_DIR: join(sourceRoot, 'build'),
