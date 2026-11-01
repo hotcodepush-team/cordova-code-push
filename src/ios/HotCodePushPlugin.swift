@@ -175,8 +175,12 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(showDebugScreen:) func showDebugScreen(_ command: CDVInvokedUrlCommand) {
-        guard let core = core, let viewController = viewController else {
+        guard let core = core else {
             reject(command, notConfiguredMessage)
+            return
+        }
+        guard let viewController = viewController else {
+            reject(command, "The debug screen has no view controller to open over")
             return
         }
         DispatchQueue.main.async {
