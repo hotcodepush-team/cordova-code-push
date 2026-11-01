@@ -6,7 +6,10 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 // The core comes from core-android's maven branch at a pinned commit until the library is on Maven Central.
 repositories {
-    maven { url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/' }
+    maven {
+        url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
+        content { includeGroup 'com.hotcodepush' }
+    }
 }
 
 dependencies {

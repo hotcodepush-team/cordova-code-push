@@ -20,60 +20,20 @@ final class CordovaBundleLoaderTests: XCTestCase {
         XCTAssertNil(servedFile)
     }
 
-    func testShouldLeaveCordovaJsToCordovaWhenABundleRuns() {
+    func testShouldLeaveTheFrameworkFilesToCordovaWhenABundleRuns() {
         loader.beginServing(bundleId: "b1")
 
-        let servedFile = loader.servedFile(forRequestPath: "/cordova.js")
-
-        XCTAssertNil(servedFile)
+        for path in ["/cordova.js", "/cordova_plugins.js", "/plugins/cordova-plugin-device/www/device.js", "/_app_file_/var/mobile/Documents/photo.jpg"] {
+            XCTAssertNil(loader.servedFile(forRequestPath: path), path)
+        }
     }
 
-    func testShouldLeaveCordovaPluginsJsToCordovaWhenABundleRuns() {
+    func testShouldAnswerTheStartPageWhenThePathNamesNoFile() {
         loader.beginServing(bundleId: "b1")
 
-        let servedFile = loader.servedFile(forRequestPath: "/cordova_plugins.js")
-
-        XCTAssertNil(servedFile)
-    }
-
-    func testShouldLeaveAPluginFileToCordovaWhenABundleRuns() {
-        loader.beginServing(bundleId: "b1")
-
-        let servedFile = loader.servedFile(forRequestPath: "/plugins/cordova-plugin-device/www/device.js")
-
-        XCTAssertNil(servedFile)
-    }
-
-    func testShouldLeaveAnAppFileToCordovaWhenABundleRuns() {
-        loader.beginServing(bundleId: "b1")
-
-        let servedFile = loader.servedFile(forRequestPath: "/_app_file_/var/mobile/Documents/photo.jpg")
-
-        XCTAssertNil(servedFile)
-    }
-
-    func testShouldAnswerTheStartPageWhenThePathIsEmpty() {
-        loader.beginServing(bundleId: "b1")
-
-        let servedFile = loader.servedFile(forRequestPath: "")
-
-        assertServedFile(servedFile, equals: .file(bundleFile("index.html", bundleId: "b1")))
-    }
-
-    func testShouldAnswerTheStartPageWhenThePathIsTheRoot() {
-        loader.beginServing(bundleId: "b1")
-
-        let servedFile = loader.servedFile(forRequestPath: "/")
-
-        assertServedFile(servedFile, equals: .file(bundleFile("index.html", bundleId: "b1")))
-    }
-
-    func testShouldAnswerTheStartPageWhenThePathHasNoExtension() {
-        loader.beginServing(bundleId: "b1")
-
-        let servedFile = loader.servedFile(forRequestPath: "/settings")
-
-        assertServedFile(servedFile, equals: .file(bundleFile("index.html", bundleId: "b1")))
+        for path in ["", "/", "/settings"] {
+            assertServedFile(loader.servedFile(forRequestPath: path), equals: .file(bundleFile("index.html", bundleId: "b1")))
+        }
     }
 
     func testShouldAnswerTheBundleFileAtThePath() {

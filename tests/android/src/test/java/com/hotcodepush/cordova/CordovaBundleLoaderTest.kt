@@ -40,33 +40,14 @@ class CordovaBundleLoaderTest {
     }
 
     @Test
-    fun shouldLeaveCordovaJsToCordovaWhenABundleRuns() {
-        layOutBundle("b1", "cordova.js" to "b1")
+    fun shouldLeaveTheFrameworkFilesToCordovaWhenABundleRuns() {
+        val frameworkPaths = listOf("cordova.js", "cordova_plugins.js", "plugins/cordova-plugin-device/www/device.js")
+        layOutBundle("b1", *frameworkPaths.map { it to "b1" }.toTypedArray())
         loader.beginServing("b1")
 
-        val response = loader.handleRequest("cordova.js")
-
-        assertNull(response)
-    }
-
-    @Test
-    fun shouldLeaveCordovaPluginsJsToCordovaWhenABundleRuns() {
-        layOutBundle("b1", "cordova_plugins.js" to "b1")
-        loader.beginServing("b1")
-
-        val response = loader.handleRequest("cordova_plugins.js")
-
-        assertNull(response)
-    }
-
-    @Test
-    fun shouldLeaveAPluginFileToCordovaWhenABundleRuns() {
-        layOutBundle("b1", "plugins/cordova-plugin-device/www/device.js" to "b1")
-        loader.beginServing("b1")
-
-        val response = loader.handleRequest("plugins/cordova-plugin-device/www/device.js")
-
-        assertNull(response)
+        for (path in frameworkPaths) {
+            assertNull(path, loader.handleRequest(path))
+        }
     }
 
     @Test

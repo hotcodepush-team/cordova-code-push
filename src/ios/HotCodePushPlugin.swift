@@ -3,7 +3,7 @@ import Foundation
 import HotCodePushCore
 import WebKit
 
-// The core ships prebuilt in Release, so the app's debug flag is read here, where the plugin compiles with the app.
+// The core ships as a prebuilt Release build. The SDK compiles with the app, so it reads the debug flag here.
 #if DEBUG
 private let isDebugBuild = true
 #else
@@ -175,8 +175,12 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(showDebugScreen:) func showDebugScreen(_ command: CDVInvokedUrlCommand) {
-        guard let core = core, let viewController = viewController else {
+        guard let core = core else {
             reject(command, notConfiguredMessage)
+            return
+        }
+        guard let viewController = viewController else {
+            reject(command, "The debug screen has no view controller to open over")
             return
         }
         DispatchQueue.main.async {

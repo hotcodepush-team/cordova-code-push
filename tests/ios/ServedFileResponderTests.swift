@@ -27,150 +27,35 @@ final class ServedFileResponderTests: XCTestCase {
         XCTAssertEqual(task.receivedData, Data("0123456789".utf8))
     }
 
-    func testShouldAnswerTheAskedBytesWithPartialContentWhenARangeIsAsked() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
+    // A 416 answer carries no body and so no Content-Length.
+    func testShouldAnswerEachRangeWithItsStatusAndBytes() throws {
+        let cases: [(range: String, contents: String, status: Int, contentRange: String?, body: String)] = [
+            ("bytes=2-5", "0123456789", 206, "bytes 2-5/10", "2345"),
+            ("bytes=4-", "0123456789", 206, "bytes 4-9/10", "456789"),
+            ("bytes=2-1000", "0123456789", 206, "bytes 2-9/10", "23456789"),
+            ("bytes=-3", "0123456789", 206, "bytes 7-9/10", "789"),
+            ("bytes=-20", "0123456789", 206, "bytes 0-9/10", "0123456789"),
+            ("bytes=-3", "", 200, nil, ""),
+            ("bytes=0-1,5-6", "0123456789", 200, nil, "0123456789"),
+            ("2-5", "0123456789", 200, nil, "0123456789"),
+            ("bytes=two-five", "0123456789", 200, nil, "0123456789"),
+            ("bytes=0-", "", 416, "bytes */0", ""),
+            ("bytes=10-", "0123456789", 416, "bytes */10", ""),
+            ("bytes=100-200", "0123456789", 416, "bytes */10", ""),
+            ("bytes=5-2", "0123456789", 416, "bytes */10", ""),
+            ("bytes=-0", "0123456789", 416, "bytes */10", "")
+        ]
+        for testCase in cases {
+            let file = try writeFile("app.js", contents: testCase.contents)
 
-        let task = respond(with: .file(file), range: "bytes=2-5")
+            let task = respond(with: .file(file), range: testCase.range)
 
-        XCTAssertEqual(task.response?.statusCode, 206)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes 2-5/10")
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), "4")
-        XCTAssertEqual(task.receivedData, Data("2345".utf8))
-    }
-
-    func testShouldAnswerUpToTheLastByteWhenTheRangeHasNoEnd() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=4-")
-
-        XCTAssertEqual(task.response?.statusCode, 206)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes 4-9/10")
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), "6")
-        XCTAssertEqual(task.receivedData, Data("456789".utf8))
-    }
-
-    func testShouldAnswerUpToTheLastByteWhenTheRangeEndsPastTheFile() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=2-1000")
-
-        XCTAssertEqual(task.response?.statusCode, 206)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes 2-9/10")
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), "8")
-        XCTAssertEqual(task.receivedData, Data("23456789".utf8))
-    }
-
-    func testShouldAnswerTheLastBytesWhenTheRangeIsASuffix() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=-3")
-
-        XCTAssertEqual(task.response?.statusCode, 206)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes 7-9/10")
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), "3")
-        XCTAssertEqual(task.receivedData, Data("789".utf8))
-    }
-
-    func testShouldAnswerTheWholeFileWithPartialContentWhenTheSuffixIsLongerThanTheFile() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=-20")
-
-        XCTAssertEqual(task.response?.statusCode, 206)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes 0-9/10")
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), "10")
-        XCTAssertEqual(task.receivedData, Data("0123456789".utf8))
-    }
-
-    func testShouldAnswerTheWholeFileWhenAnEmptyFileIsAskedForASuffix() throws {
-        let file = try writeFile("app.js", contents: "")
-
-        let task = respond(with: .file(file), range: "bytes=-3")
-
-        XCTAssertEqual(task.response?.statusCode, 200)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), "0")
-        XCTAssertNil(task.response?.value(forHTTPHeaderField: "Content-Range"))
-        XCTAssertTrue(task.receivedData.isEmpty)
-    }
-
-    func testShouldAnswerTheWholeFileWhenSeveralRangesAreAsked() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=0-1,5-6")
-
-        XCTAssertEqual(task.response?.statusCode, 200)
-        XCTAssertNil(task.response?.value(forHTTPHeaderField: "Content-Range"))
-        XCTAssertEqual(task.receivedData, Data("0123456789".utf8))
-    }
-
-    func testShouldAnswerTheWholeFileWhenTheRangeHasNoBytesUnit() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "2-5")
-
-        XCTAssertEqual(task.response?.statusCode, 200)
-        XCTAssertNil(task.response?.value(forHTTPHeaderField: "Content-Range"))
-        XCTAssertEqual(task.receivedData, Data("0123456789".utf8))
-    }
-
-    func testShouldAnswerTheWholeFileWhenTheRangeDoesNotParse() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=two-five")
-
-        XCTAssertEqual(task.response?.statusCode, 200)
-        XCTAssertNil(task.response?.value(forHTTPHeaderField: "Content-Range"))
-        XCTAssertEqual(task.receivedData, Data("0123456789".utf8))
-    }
-
-    func testShouldAnswerRangeNotSatisfiableWhenAnEmptyFileIsAskedFromItsFirstByte() throws {
-        let file = try writeFile("app.js", contents: "")
-
-        let task = respond(with: .file(file), range: "bytes=0-")
-
-        XCTAssertEqual(task.response?.statusCode, 416)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes */0")
-        XCTAssertTrue(task.receivedData.isEmpty)
-    }
-
-    func testShouldAnswerRangeNotSatisfiableWhenTheRangeStartsAtTheEndOfTheFile() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=10-")
-
-        XCTAssertEqual(task.response?.statusCode, 416)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes */10")
-        XCTAssertTrue(task.receivedData.isEmpty)
-    }
-
-    func testShouldAnswerRangeNotSatisfiableWhenTheRangeStartsPastTheEndOfTheFile() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=100-200")
-
-        XCTAssertEqual(task.response?.statusCode, 416)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes */10")
-        XCTAssertTrue(task.receivedData.isEmpty)
-    }
-
-    func testShouldAnswerRangeNotSatisfiableWhenTheRangeEndsBeforeItStarts() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=5-2")
-
-        XCTAssertEqual(task.response?.statusCode, 416)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes */10")
-        XCTAssertTrue(task.receivedData.isEmpty)
-    }
-
-    func testShouldAnswerRangeNotSatisfiableWhenTheSuffixIsEmpty() throws {
-        let file = try writeFile("app.js", contents: "0123456789")
-
-        let task = respond(with: .file(file), range: "bytes=-0")
-
-        XCTAssertEqual(task.response?.statusCode, 416)
-        XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), "bytes */10")
-        XCTAssertTrue(task.receivedData.isEmpty)
+            let message = "\(testCase.range) of \(testCase.contents.count) bytes"
+            XCTAssertEqual(task.response?.statusCode, testCase.status, message)
+            XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Range"), testCase.contentRange, message)
+            XCTAssertEqual(task.response?.value(forHTTPHeaderField: "Content-Length"), testCase.status == 416 ? nil : String(testCase.body.count), message)
+            XCTAssertEqual(task.receivedData, Data(testCase.body.utf8), message)
+        }
     }
 
     func testShouldAnswerNotFoundWhenTheBundleHasNoFile() {
