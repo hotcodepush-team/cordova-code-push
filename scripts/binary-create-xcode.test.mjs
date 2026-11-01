@@ -41,13 +41,13 @@ describe(
     let appPath;
     let nodeDirectoryPath;
     let projectRoot;
-    let sourceRoot;
+    let xcodeProjectPath;
 
     beforeEach(() => {
       projectRoot = mkdtempSync(join(tmpdir(), 'binary-create-xcode-'));
-      sourceRoot = join(projectRoot, 'platforms', 'ios');
-      mkdirSync(join(sourceRoot, 'www'), { recursive: true });
-      appPath = join(sourceRoot, 'build', APP_NAME);
+      xcodeProjectPath = join(projectRoot, 'platforms', 'ios');
+      mkdirSync(join(xcodeProjectPath, 'www'), { recursive: true });
+      appPath = join(xcodeProjectPath, 'build', APP_NAME);
       mkdirSync(join(appPath, 'www'), { recursive: true });
       writeFileSync(join(appPath, 'Info.plist'), PROCESSED_INFO_PLIST);
       execFileSync('plutil', [
@@ -87,7 +87,7 @@ describe(
           '--platform',
           'ios',
           '--embedded-bundle-path',
-          join(sourceRoot, 'www'),
+          join(xcodeProjectPath, 'www'),
           '--resource-file-path',
           join(appPath, 'www', 'hotcodepush.json'),
         ],
@@ -107,7 +107,7 @@ describe(
           '--platform',
           'ios',
           '--embedded-bundle-path',
-          join(sourceRoot, 'www'),
+          join(xcodeProjectPath, 'www'),
           '--resource-file-path',
           join(appPath, 'www', 'hotcodepush.json'),
         ],
@@ -116,7 +116,35 @@ describe(
 
     it('should run the Node .xcode.env names when the PATH has none', () => {
       writeFileSync(
-        join(sourceRoot, '.xcode.env'),
+        join(xcodeProjectPath, '.xcode.env'),
+        `export NODE_BINARY=${join(nodeDirectoryPath, 'node')}\n`,
+      );
+
+      assert.equal(
+        runScript({
+          DEPLOYMENT_POSTPROCESSING: 'NO',
+          PATH: '/usr/bin:/bin',
+        })[0],
+        'hotcodepush',
+      );
+    });
+
+    it('should run the Node .xcode.env.local names over the one of .xcode.env', () => {
+      const xcodeEnvNodeDirectoryPath = join(
+        projectRoot,
+        'xcode-env-node',
+        'bin',
+      );
+      mkdirSync(xcodeEnvNodeDirectoryPath, { recursive: true });
+      writeFileSync(join(xcodeEnvNodeDirectoryPath, 'node'), '#!/bin/sh\n', {
+        mode: 0o755,
+      });
+      writeFileSync(
+        join(xcodeProjectPath, '.xcode.env'),
+        `export NODE_BINARY=${join(xcodeEnvNodeDirectoryPath, 'node')}\n`,
+      );
+      writeFileSync(
+        join(xcodeProjectPath, '.xcode.env.local'),
         `export NODE_BINARY=${join(nodeDirectoryPath, 'node')}\n`,
       );
 
@@ -189,6 +217,17 @@ describe(
       );
     });
 
+    it('should fail naming .xcode.env when no Node is found', () => {
+      assert.throws(
+        () =>
+          runScript({
+            DEPLOYMENT_POSTPROCESSING: 'NO',
+            PATH: '/usr/bin:/bin',
+          }),
+        /\.xcode\.env/,
+      );
+    });
+
     function runScript(buildSettings) {
       execFileSync('/bin/sh', [SCRIPT_PATH], {
         env: {
@@ -196,11 +235,12 @@ describe(
           // Keeps the machine's own Homebrew Node out of the lookup.
           HOMEBREW_PREFIX: join(projectRoot, 'no-homebrew'),
           INFOPLIST_PATH: join(APP_NAME, 'Info.plist'),
-          SRCROOT: sourceRoot,
-          TARGET_BUILD_DIR: join(sourceRoot, 'build'),
+          PROJECT_DIR: xcodeProjectPath,
+          TARGET_BUILD_DIR: join(xcodeProjectPath, 'build'),
           UNLOCALIZED_RESOURCES_FOLDER_PATH: APP_NAME,
           ...buildSettings,
         },
+        stdio: 'pipe',
       });
       return readFileSync(join(nodeDirectoryPath, 'arguments'), 'utf8')
         .trimEnd()
