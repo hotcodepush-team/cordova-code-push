@@ -34,14 +34,15 @@
     "plugin.xml"
   ],
   "scripts": {
-    "build": "npm run clean && node scripts/write-sdk-version.mjs && tsc",
+    "build": "npm run clean && node scripts/write-sdk-version.mjs && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict",
     "test": "node --test plugin.test.mjs scripts/*.test.mjs src/*.test.mjs",
     "test:android": "node scripts/write-sdk-version.mjs && cd tests/android && ./gradlew test --console=plain",
     "test:ios": "node scripts/write-sdk-version.mjs && xcodebuild test -scheme HotCodePushCordovaTests -destination 'platform=iOS Simulator,name=iPhone 17' -quiet",
-    "verify": "npm run lint && npm test && npm run build",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build",
     "verify:android": "npm run build && node scripts/build-test-app.mjs android",
     "verify:ios": "npm run build && node scripts/build-test-app.mjs ios"
   },
@@ -56,6 +57,7 @@
     "eslint": "10.11.0",
     "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-import-x": "4.17.1",
+    "pkg-pr-new": "0.0.88",
     "prettier": "3.9.8",
     "rimraf": "6.1.2",
     "typescript": "5.9.3",
