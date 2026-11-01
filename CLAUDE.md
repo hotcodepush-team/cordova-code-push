@@ -57,7 +57,13 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The SDK never sees an API DTO: its contract is the channel index, the bundle manifest and the events endpoint, additive only.
 - Safety is on by default and cannot be switched off: the readiness gate, the local blocklist, the automatic rollback. The embedded bundle is the one exception: a release that carries it is confirmed as it becomes current, never gated, rolled back or blocklisted, and downloads nothing.
 - Nothing a device does not need to decide lives here: rollout, conditions, revocation and the cap are evaluated from the index, never configured.
-- Every catalog value is lowercase snake_case with no prefix, the statuses, the reasons and the strategies alike: `up_to_date`, `signature_invalid`, `next_start`; the event names, the methods, the fields, the preferences, the environment variables and each language's identifiers keep their own form. A method throws a plain error only for a programming mistake.
+- Every catalog value is lowercase snake_case with no prefix, the statuses, the reasons and the strategies alike: `up_to_date`, `signature_invalid`, `next_start`; the event names, the methods, the fields, the configuration keys, the environment variables and each language's identifiers keep their own form. A method throws a plain error only for a programming mistake.
+- Results are one shape per method and never throw for an outcome an app should handle.
+- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update service for React Native, Expo, Capacitor and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
+- Prose names the supported frameworks in the order React Native, Expo, Capacitor and Cordova, the larger communities first; a list a reader scans for their own item, such as an enum's choices, a prompt, a tab set or a table, sorts alphabetically.
+- This repository's own sentences lead with Cordova.
+- A test earns its place by catching a bug nothing else catches, at the lowest layer that can prove it; one test per branch, never per value, and nothing for what the types, the framework or a library guarantee.
+- A new test names the behaviour or the bug it proves; if deleting the production code would not fail it, it does not get in.
 - The plugin's id is its package name, `@hotcodepush/cordova-code-push`: Cordova restores a plugin by looking its id up among `package.json`'s dependencies, and `cordova-ios` names the Swift package and its product after it.
 - A bundle is served on the app's own origin: the plugin answers Cordova's scheme handler on iOS and its asset loader on Android before Cordova does, from the bundle's directory under the store; no start page is swapped and no storage moves.
 - `cordova.js`, `cordova_plugins.js` and `plugins/` are the binary's under every bundle: a request for them is never answered from a bundle's directory.
@@ -65,10 +71,6 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - The resource file is `www/hotcodepush.json`, written by the Xcode phase into the built app's `www` and by the Gradle task into the variant's generated `www` assets; the embedded bundle is the platform's `www`, addressed by the embedded manifest's hashes, without the native glue the loader serves from the binary.
 - The plugin's `plugin.xml` sets `GradlePluginKotlinEnabled`, `GradlePluginKotlinVersion` and the iOS `deployment-target` of 15.0, so an app adds the plugin and edits nothing; the app's own preference wins.
 - A page start the plugin did not request, `location.reload()`, a navigation, iOS's recovery from a web content crash, is never reported to the core: the process start decides what runs and gates it, a release stored for the next start waits for the next launch, and only the SDK's own reloads hold `updateRolledBack` for the page that follows.
-- Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update platform for React Native, Expo, Capacitor and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
-- Wherever the supported frameworks are listed, the order is React Native, Expo, Capacitor and Cordova, the larger communities first; this repository's own sentences lead with Cordova.
-- A test earns its place by catching a bug nothing else catches, at the lowest layer that can prove it; one test per branch, never per value, and nothing for what the types, the framework or a library guarantee.
-- A new test names the behaviour or the bug it proves; if deleting the production code would not fail it, it does not get in.
 
 ## Comments
 
@@ -80,6 +82,7 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 
 ## Agent workspace
 
-- `.mcp.json` is absent on purpose: no server covers Cordova's own documentation, and the HotCodePush server joins when it exists.
-- `.claude/skills/` holds the developer skills copied from `hotcodepush-team/.github`, pinned in `skills-lock.json`.
+- No `.mcp.json`: no server covers this repo's stack yet; the HotCodePush server joins when it exists.
+- `.claude/skills/` holds the developer skills copied from `hotcodepush-team/.github` with the skills CLI and pinned in `skills-lock.json`; update them with `npx skills update`.
+- `.github/copilot-instructions.md` holds the review criteria, the only Copilot-specific file.
 - Commits are conventional commits; `main` is trunk, CI is the gate, and a commit that lands an issue says `Closes #<n>`.
