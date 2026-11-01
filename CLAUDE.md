@@ -66,6 +66,8 @@ The shared types come from `@hotcodepush/protocol` the same way, pinned to a com
 - A page start the plugin did not request, `location.reload()`, a navigation, iOS's recovery from a web content crash, is never reported to the core: the process start decides what runs and gates it, a release stored for the next start waits for the next launch, and only the SDK's own reloads hold `updateRolledBack` for the page that follows.
 - Prose names the feature over-the-air (OTA) updates: "over-the-air (OTA) update" on the first mention of a surface, "OTA update" after it, and the appositive "HotCodePush, the over-the-air (OTA) update platform for React Native, Expo, Capacitor and Cordova". "Live update" is the Capacitor community's word: it stays in the `capacitor-live-updates` package name and in a list of alternative names for search, never as HotCodePush's own term.
 - Wherever the supported frameworks are listed, the order is React Native, Expo, Capacitor and Cordova, the larger communities first; this repository's own sentences lead with Cordova.
+- A test earns its place by catching a bug nothing else catches, at the lowest layer that can prove it; one test per branch, never per value, and nothing for what the types, the framework or a library guarantee.
+- A new test names the behaviour or the bug it proves; if deleting the production code would not fail it, it does not get in.
 
 ## Comments
 
