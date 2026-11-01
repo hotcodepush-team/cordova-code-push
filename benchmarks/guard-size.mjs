@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Fails when a fresh "with" measurement exceeds the committed baseline by more than the tolerance.
-// Prints a table for the job summary.
+// Compares a fresh "with" measurement against the committed baseline and fails above the tolerance.
+// It prints the table for the job summary.
 import { readFileSync } from 'node:fs';
 
 const [baselinePath, measuredPath] = process.argv.slice(2);

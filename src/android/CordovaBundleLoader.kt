@@ -37,7 +37,7 @@ class CordovaBundleLoader(
     }
 
     override fun persistServedBundle(bundleId: String?) {
-        store.putString(SERVED_BUNDLE_KEY, bundleId)
+        store.putString(SERVED_BUNDLE_ID_KEY, bundleId)
     }
 
     override fun loadServedBundle(bundleId: String?) {
@@ -76,13 +76,13 @@ class CordovaBundleLoader(
         else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
     }
 
-    private fun persistedBundleId(): String? = store.getString(SERVED_BUNDLE_KEY)?.takeIf { projectionDirectory(it).isDirectory }
+    private fun persistedBundleId(): String? = store.getString(SERVED_BUNDLE_ID_KEY)?.takeIf { projectionDirectory(it).isDirectory }
 
     companion object {
         const val EMBEDDED_ASSET_PATH = "www"
         private val FRAMEWORK_FILE_PATHS = setOf("cordova.js", "cordova_plugins.js")
         private const val FRAMEWORK_PLUGINS_PREFIX = "plugins/"
-        private const val SERVED_BUNDLE_KEY = "hotcodepush.servedBundleId"
+        private const val SERVED_BUNDLE_ID_KEY = "hotcodepush.servedBundleId"
         private const val START_PAGE = "index.html"
     }
 }

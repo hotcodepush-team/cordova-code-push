@@ -10,7 +10,7 @@ final class CordovaBundleLoader: BundleLoader {
     // `cordova prepare` writes these files for the binary's plugins, so a bundle never serves them.
     private static let frameworkFilePaths: Set<String> = ["/cordova.js", "/cordova_plugins.js"]
     private static let frameworkPathPrefixes = ["/plugins/", "/_app_file_"]
-    private static let persistedBundleKey = "hotcodepush.servedBundleId"
+    private static let servedBundleIdKey = "hotcodepush.servedBundleId"
 
     private let lock = NSLock()
     private let reloadStartPage: () -> Void
@@ -44,7 +44,7 @@ final class CordovaBundleLoader: BundleLoader {
     }
 
     func persistServedBundle(bundleId: String?) {
-        store.set(bundleId, forKey: CordovaBundleLoader.persistedBundleKey)
+        store.set(bundleId, forKey: CordovaBundleLoader.servedBundleIdKey)
     }
 
     func loadServedBundle(bundleId: String?) {
@@ -83,7 +83,7 @@ final class CordovaBundleLoader: BundleLoader {
     }
 
     private func persistedBundleId() -> String? {
-        guard let bundleId = store.string(forKey: CordovaBundleLoader.persistedBundleKey), FileManager.default.fileExists(atPath: projectionDirectory(bundleId: bundleId).path) else {
+        guard let bundleId = store.string(forKey: CordovaBundleLoader.servedBundleIdKey), FileManager.default.fileExists(atPath: projectionDirectory(bundleId: bundleId).path) else {
             return nil
         }
         return bundleId
