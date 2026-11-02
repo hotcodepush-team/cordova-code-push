@@ -29,8 +29,8 @@ kotlin {
 }
 
 def cordovaAndroidVersion = new JsonSlurper().parse(file('../../package.json')).devDependencies['cordova-android']
-// The core at the commit the shipped Gradle reference pins, so a bump of the pin there reaches the tests.
-def coreAndroid = (file('../../src/android/hotcodepush.gradle').text =~ /com\.hotcodepush:core-android:[0-9a-f]{40}/)[0]
+// The core at the version the shipped Gradle reference pins, so a bump of the pin there reaches the tests.
+def coreAndroid = (file('../../src/android/hotcodepush.gradle').text =~ /com\.hotcodepush:core-android:[^']+/)[0]
 
 dependencies {
     implementation "org.apache.cordova:framework:$cordovaAndroidVersion"

@@ -4,16 +4,17 @@
 import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
 
-// The core comes from core-android's maven branch at a pinned commit until the library is on Maven Central.
+// The core comes from its release asset, which scripts/download-core-android.mjs unpacks into the plugin's src/android/libs/m2, until the library is on Maven Central.
+// Cordova copies this file into the platform, so the repository lies in the plugin's copy under the Cordova project's plugins, two levels above the platform's Gradle project.
 repositories {
     maven {
-        url 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
+        url = rootProject.file('../../plugins/@hotcodepush/cordova-code-push/src/android/libs/m2')
         content { includeGroup 'com.hotcodepush' }
     }
 }
 
 dependencies {
-    implementation 'com.hotcodepush:core-android:a5bfc4aeede98739302f49510766a6f5decb9299'
+    implementation 'com.hotcodepush:core-android:0.1.0'
     implementation "androidx.webkit:webkit:${cordovaConfig.ANDROIDX_WEBKIT_VERSION}"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 }

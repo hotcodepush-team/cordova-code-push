@@ -17,6 +17,8 @@ Package.resolved
 xcuserdata
 
 # Android
+# The core's Maven repository, downloaded by every build
+src/android/libs
 tests/android/.gradle
 tests/android/.kotlin
 tests/android/build

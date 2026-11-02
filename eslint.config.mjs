@@ -23,7 +23,9 @@ export default defineConfig(
     files: ['benchmarks/**/*.mjs', 'scripts/**/*.js', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: {
+        Buffer: 'readonly',
         console: 'readonly',
+        fetch: 'readonly',
         module: 'writable',
         process: 'readonly',
         require: 'readonly',

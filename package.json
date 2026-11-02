@@ -29,17 +29,18 @@
     "scripts/add-binary-create-phase.js",
     "scripts/binary-create-xcode.sh",
     "src/android/",
+    "!src/android/libs/core-android.checksum",
     "src/ios/",
     "Package.swift",
     "plugin.xml"
   ],
   "scripts": {
-    "build": "npm run clean && node scripts/write-sdk-version.mjs && tsc --project tsconfig.build.json",
+    "build": "npm run clean && node scripts/write-sdk-version.mjs && node scripts/download-core-android.mjs && tsc --project tsconfig.build.json",
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict",
     "test": "node --test plugin.test.mjs scripts/*.test.mjs src/*.test.mjs",
-    "test:android": "node scripts/write-sdk-version.mjs && cd tests/android && ./gradlew test --console=plain",
+    "test:android": "node scripts/write-sdk-version.mjs && node scripts/download-core-android.mjs && cd tests/android && ./gradlew test --console=plain",
     "test:ios": "node scripts/write-sdk-version.mjs && xcodebuild test -scheme HotCodePushCordovaTests -destination 'platform=iOS Simulator,name=iPhone 17' -quiet",
     "typecheck": "tsc --noEmit",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
@@ -77,6 +78,12 @@
         "cordova-android": ">=14.0.0",
         "cordova-ios": ">=8.0.0"
       }
+    }
+  },
+  "hotcodepush": {
+    "coreAndroid": {
+      "version": "0.1.0",
+      "checksum": "7c9b91381c5c99bf9e2592fd14e912972f0bb8f3df1b0a3c340a75ca5ef3a65b"
     }
   },
   "publishConfig": {

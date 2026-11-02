@@ -11,7 +11,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
-            url = 'https://raw.githubusercontent.com/hotcodepush-team/core-android/maven/'
+            url = file('../../src/android/libs/m2')
             content { includeGroup 'com.hotcodepush' }
         }
     }

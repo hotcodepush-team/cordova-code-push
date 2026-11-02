@@ -44,7 +44,7 @@ See [hotcodepush.com/docs/sdks/cordova](https://hotcodepush.com/docs/sdks/cordov
 ```sh
 nvm use
 npm ci
-npm run build            # the TypeScript into dist/; run it before opening the native projects
+npm run build            # the TypeScript into dist/ and the Android core into src/android/libs; run it before opening the native projects
 npm run lint
 npm test                 # the module, the hook and the Xcode script; the script's tests on macOS only
 npm run test:ios         # the Swift tests, on an iOS simulator
