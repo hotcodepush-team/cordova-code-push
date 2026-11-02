@@ -56,7 +56,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         }
         val context = cordova.context
         val configuration = try {
-            Configuration.read(context, "${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json")
+            Configuration.read(context, assetPath = "${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json")
         } catch (exception: Exception) {
             notConfiguredMessage = Configuration.resolveRefusedMessage(exception)
             null
@@ -65,12 +65,16 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             LOG.e(TAG, notConfiguredMessage)
             return
         }
-        val loader = CordovaBundleLoader(context, SharedPreferencesStore(context), ::reloadStartPage)
+        val loader = CordovaBundleLoader(context = context, store = SharedPreferencesStore(context), reloadStartPage = ::reloadStartPage)
         val core = Core(
             context = context,
             configuration = configuration,
             device = DeviceFacts.current(context, SDK_VERSION),
-            embedded = AssetsEmbeddedBundle(context, configuration.embeddedBundleManifest, CordovaBundleLoader.EMBEDDED_ASSET_PATH),
+            embedded = AssetsEmbeddedBundle(
+                context = context,
+                manifest = configuration.embeddedBundleManifest,
+                assetDirectory = CordovaBundleLoader.EMBEDDED_ASSET_PATH,
+            ),
             loader = loader,
             listener = this,
             scope = scope,
@@ -189,17 +193,17 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         options.optStringOrNull("id")?.let { ChannelChoice.Id(it) } ?: options.optStringOrNull("name")?.let { ChannelChoice.Name(it) }
 
     private fun syncOptions(options: JSONObject) = SyncOptions(
-        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
-        downloadStrategy = option("downloadStrategy", options, DownloadStrategy::fromWire),
-        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
+        applyStrategy = option(options, name = "applyStrategy", parse = ApplyStrategy::fromWire),
+        downloadStrategy = option(options, name = "downloadStrategy", parse = DownloadStrategy::fromWire),
+        mandatoryApplyStrategy = option(options, name = "mandatoryApplyStrategy", parse = MandatoryApplyStrategy::fromWire),
     )
 
     private fun downloadUpdateOptions(options: JSONObject) = DownloadUpdateOptions(
-        applyStrategy = option("applyStrategy", options, ApplyStrategy::fromWire),
-        mandatoryApplyStrategy = option("mandatoryApplyStrategy", options, MandatoryApplyStrategy::fromWire),
+        applyStrategy = option(options, name = "applyStrategy", parse = ApplyStrategy::fromWire),
+        mandatoryApplyStrategy = option(options, name = "mandatoryApplyStrategy", parse = MandatoryApplyStrategy::fromWire),
     )
 
-    private fun <T> option(name: String, options: JSONObject, parse: (String?) -> T?): T? {
+    private fun <T> option(options: JSONObject, name: String, parse: (String?) -> T?): T? {
         val raw = options.optStringOrNull(name) ?: return null
         return parse(raw) ?: throw PlainException("$name is not one of its choices: $raw")
     }

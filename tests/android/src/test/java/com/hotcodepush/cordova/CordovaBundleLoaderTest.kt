@@ -17,7 +17,7 @@ import java.io.File
 class CordovaBundleLoaderTest {
     private val context: Context = RuntimeEnvironment.getApplication()
     private val store = SharedPreferencesStore(context.getSharedPreferences("hotcodepush", Context.MODE_PRIVATE))
-    private val loader = CordovaBundleLoader(context, store) {}
+    private val loader = CordovaBundleLoader(context = context, store = store, reloadStartPage = {})
 
     @Test
     fun shouldLeaveTheRequestToCordovaWhenTheStartHasNotDecided() {
