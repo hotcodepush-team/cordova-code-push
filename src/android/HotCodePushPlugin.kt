@@ -4,6 +4,7 @@ import com.hotcodepush.core.ApplyStrategy
 import com.hotcodepush.core.AssetsEmbeddedBundle
 import com.hotcodepush.core.ChannelChoice
 import com.hotcodepush.core.Configuration
+import com.hotcodepush.core.ConfigurationLoadResult
 import com.hotcodepush.core.Core
 import com.hotcodepush.core.CoreListener
 import com.hotcodepush.core.DebugScreen
@@ -55,16 +56,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
             return
         }
         val context = cordova.context
-        val configuration = try {
-            Configuration.read(context, assetPath = "${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json")
-        } catch (exception: Exception) {
-            notConfiguredMessage = Configuration.resolveRefusedMessage(exception)
-            null
-        }
-        if (configuration == null) {
-            LOG.e(TAG, notConfiguredMessage)
-            return
-        }
+        val configuration = loadConfiguration() ?: return
         val loader = CordovaBundleLoader(context = context, store = SharedPreferencesStore(context), reloadStartPage = ::reloadStartPage)
         val core = Core(
             context = context,
@@ -83,6 +75,18 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         this.core = core
         this.loader = loader
         loader.beginServing(core.handleAppStartBlocking())
+    }
+
+    private fun loadConfiguration(): Configuration? {
+        val assetPath = "${CordovaBundleLoader.EMBEDDED_ASSET_PATH}/hotcodepush.json"
+        return when (val result = Configuration.load(cordova.context, assetPath = assetPath)) {
+            is ConfigurationLoadResult.Loaded -> result.configuration
+            is ConfigurationLoadResult.NotConfigured -> {
+                notConfiguredMessage = result.message
+                LOG.e(TAG, result.message)
+                null
+            }
+        }
     }
 
     override fun getPathHandler(): CordovaPluginPathHandler = pathHandler
