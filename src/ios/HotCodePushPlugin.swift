@@ -23,17 +23,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     // Cordova calls this in `viewDidLoad` and loads the start page right after, so the start decides first which bundle serves it.
     override public func pluginInitialize() {
-        let configuration: Configuration?
-        do {
-            configuration = try Configuration.read(subdirectory: CordovaBundleLoader.embeddedDirectoryName)
-        } catch {
-            notConfiguredMessage = Configuration.resolveRefusedMessage(error)
-            configuration = nil
-        }
-        guard let configuration = configuration else {
-            NSLog("[HotCodePush] %@", notConfiguredMessage)
-            return
-        }
+        guard let configuration = loadConfiguration() else { return }
         let loader = CordovaBundleLoader(store: UserDefaultsStore(), startPage: viewController?.startPage ?? "index.html") { [weak self] in
             self?.reloadStartPage()
         }
@@ -47,6 +37,17 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
         self.core = core
         core.observeAppLifecycle()
         loader.beginServing(bundleId: core.handleAppStartBlocking())
+    }
+
+    private func loadConfiguration() -> Configuration? {
+        switch Configuration.load(subdirectory: CordovaBundleLoader.embeddedDirectoryName) {
+        case .loaded(let configuration):
+            return configuration
+        case .notConfigured(let message):
+            notConfiguredMessage = message
+            NSLog("[HotCodePush] %@", message)
+            return nil
+        }
     }
 
     // A page start the SDK did not request, such as `location.reload()` or a web content crash recovery, is not reported to the core.
