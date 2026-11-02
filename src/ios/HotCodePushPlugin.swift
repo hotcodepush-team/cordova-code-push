@@ -199,18 +199,18 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     private static func syncOptions(from options: [String: Any]) throws -> SyncOptions {
         return SyncOptions(
-            applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
-            downloadStrategy: try option("downloadStrategy", options, DownloadStrategy.init(rawValue:)),
-            mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
+            applyStrategy: try option(in: options, named: "applyStrategy", parse: ApplyStrategy.init(rawValue:)),
+            downloadStrategy: try option(in: options, named: "downloadStrategy", parse: DownloadStrategy.init(rawValue:)),
+            mandatoryApplyStrategy: try option(in: options, named: "mandatoryApplyStrategy", parse: MandatoryApplyStrategy.init(rawValue:)))
     }
 
     private static func downloadUpdateOptions(from options: [String: Any]) throws -> DownloadUpdateOptions {
         return DownloadUpdateOptions(
-            applyStrategy: try option("applyStrategy", options, ApplyStrategy.init(rawValue:)),
-            mandatoryApplyStrategy: try option("mandatoryApplyStrategy", options, MandatoryApplyStrategy.init(rawValue:)))
+            applyStrategy: try option(in: options, named: "applyStrategy", parse: ApplyStrategy.init(rawValue:)),
+            mandatoryApplyStrategy: try option(in: options, named: "mandatoryApplyStrategy", parse: MandatoryApplyStrategy.init(rawValue:)))
     }
 
-    private static func option<T>(_ name: String, _ options: [String: Any], _ parse: (String) -> T?) throws -> T? {
+    private static func option<T>(in options: [String: Any], named name: String, parse: (String) -> T?) throws -> T? {
         guard let raw = options[name] as? String else { return nil }
         guard let value = parse(raw) else { throw PlainError("\(name) is not one of its choices: \(raw)") }
         return value
