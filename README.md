@@ -35,7 +35,7 @@ With the default `checkStrategy` of `auto`, the SDK checks on start, on resume a
 Set `downloadStrategy` or `applyStrategy` to `manual` and call `downloadUpdate()` or `applyUpdate()` yourself to control when an update lands.
 A bundle carries your web build, `www`; `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary.
 
-Files that `merges/` or a plugin's `<asset>` tags add at `cordova prepare` exist only in each platform's copy of `www`.
+Files from `merges/` and from a plugin's `<asset>` entries land only in each platform's copy of `www` at `cordova prepare`.
 A release built from `www` leaves them out, so after an update a request for one of them gets a 404.
 To ship them, run `npx hotcodepush release create` once per platform with that platform's copy: `--path platforms/ios/www --platform ios`, and `--path platforms/android/app/src/main/assets/www --platform android`.
 
