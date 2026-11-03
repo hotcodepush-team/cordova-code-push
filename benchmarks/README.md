@@ -28,7 +28,7 @@ The simulator app grows by about 3.7 MB, nearly all of it in the app's binary: t
 
 ```sh
 npm run build && npm pack --pack-destination /tmp
-node benchmarks/prepare-demo.mjs ../cordova-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-cordova-code-push-0.0.0.tgz
+node benchmarks/prepare-demo.mjs ../cordova-code-push-demo /tmp/baseline/with with /tmp/hotcodepush-cordova-code-push-*.tgz
 node benchmarks/prepare-demo.mjs ../cordova-code-push-demo /tmp/baseline/without without
 node benchmarks/measure-size.mjs /tmp/baseline/with
 node benchmarks/measure-size.mjs /tmp/baseline/without
