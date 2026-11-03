@@ -1,10 +1,10 @@
 {
   "name": "@hotcodepush/cordova-code-push",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Cordova code push by HotCodePush: the plugin that delivers over-the-air (OTA) updates to your Cordova app",
   "license": "MIT",
   "author": "Genz IT Solutions GmbH",
-  "homepage": "https://hotcodepush.com/cordova-code-push",
+  "homepage": "https://hotcodepush.com/docs/sdks/cordova",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hotcodepush-team/cordova-code-push.git"
@@ -39,6 +39,7 @@
     "clean": "rimraf ./dist",
     "fmt": "eslint . --fix && prettier --write . && swiftlint --fix --quiet",
     "lint": "eslint . && prettier --check . && swiftlint lint --quiet --strict",
+    "prepublishOnly": "npm run build",
     "test": "node --test plugin.test.mjs scripts/*.test.mjs src/*.test.mjs",
     "test:android": "node scripts/write-sdk-version.mjs && node scripts/download-core-android.mjs && cd tests/android && ./gradlew test --console=plain",
     "test:ios": "node scripts/write-sdk-version.mjs && xcodebuild test -scheme HotCodePushCordovaTests -destination 'platform=iOS Simulator,name=iPhone 17' -quiet",

@@ -5,3 +5,7 @@ node_modules
 package-lock.json
 src/android
 src/ios
+
+# Written by release-please
+.release-please-manifest.json
+CHANGELOG.md
