@@ -1,6 +1,6 @@
 {
   "name": "@hotcodepush/cordova-code-push",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cordova code push by HotCodePush: the plugin that delivers over-the-air (OTA) updates to your Cordova app",
   "license": "MIT",
   "author": "Genz IT Solutions GmbH",

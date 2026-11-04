@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     id="@hotcodepush/cordova-code-push"
-    version="0.0.1"> <!-- x-release-please-version -->
+    version="0.1.0"> <!-- x-release-please-version -->
     <name>HotCodePush</name>
     <description>Cordova code push by HotCodePush: the plugin that delivers over-the-air (OTA) updates to your Cordova app</description>
     <license>MIT</license>
