@@ -6,10 +6,11 @@ Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordov
 ## Installation
 
 `npx hotcodepush init` adds the plugin and writes `hotcodepush.json`.
-By hand, until the package is on npm, add the preview build pkg.pr.new publishes for every commit on `main`, pinned to a commit:
+By hand, add the plugin and the CLI the native builds call:
 
 ```sh
-cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcodepush/cordova-code-push@<sha>
+cordova plugin add @hotcodepush/cordova-code-push
+npm install --save-dev hotcodepush
 ```
 
 The plugin needs `cordova-ios` 8, `cordova-android` 14 or 15 and iOS 15 or later, and it wires itself into the native builds.
