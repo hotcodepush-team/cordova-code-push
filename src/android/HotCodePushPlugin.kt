@@ -179,7 +179,7 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
     }
 
     private fun attributeChanges(options: JSONObject): Map<String, String?> {
-        val attributes = options.optJSONObject("attributes") ?: throw PlainException("attributes must be an object of string or null values")
+        val attributes = options.optJSONObject("attributes") ?: throw PlainException("attributes must be an object")
         return attributes.keys().asSequence().associateWith { key ->
             when {
                 attributes.isNull(key) -> null

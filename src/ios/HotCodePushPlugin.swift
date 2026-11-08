@@ -188,7 +188,7 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     static func attributeChanges(from options: [String: Any]) throws -> [String: String?] {
-        guard let attributes = options["attributes"] as? [String: Any] else { throw PlainError("attributes must be an object of string or null values") }
+        guard let attributes = options["attributes"] as? [String: Any] else { throw PlainError("attributes must be an object") }
         var changes: [String: String?] = [:]
         for (key, value) in attributes {
             if value is NSNull {

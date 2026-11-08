@@ -47,7 +47,7 @@ class HotCodePushPluginTest {
 
             plugin.execute("setAttributes", JSONArray().put(JSONObject().put("plan", "pro")), callbackContext)
 
-            verify(callbackContext, timeout(CALL_TIMEOUT_MILLIS)).error("attributes must be an object of string or null values")
+            verify(callbackContext, timeout(CALL_TIMEOUT_MILLIS)).error("attributes must be an object")
         }
     }
 
