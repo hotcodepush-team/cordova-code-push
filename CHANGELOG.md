@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/hotcodepush-team/cordova-code-push/compare/v0.1.0...v0.1.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **readme:** install the package from npm ([#39](https://github.com/hotcodepush-team/cordova-code-push/issues/39)) ([d88f99b](https://github.com/hotcodepush-team/cordova-code-push/commit/d88f99b6e027ac6ed5bd1f31945b2095eff1b59d))
+
 ## 0.1.0 (2026-11-04)
 
 
