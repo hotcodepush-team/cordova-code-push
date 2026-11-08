@@ -1,22 +1,72 @@
 # Cordova code push by HotCodePush
 
-`@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air (OTA) updates to your app: a code push reaches installed apps in seconds, without a store review.
+[![npm](https://img.shields.io/npm/v/@hotcodepush/cordova-code-push)](https://www.npmjs.com/package/@hotcodepush/cordova-code-push)
+[![CI](https://github.com/hotcodepush-team/cordova-code-push/actions/workflows/ci.yml/badge.svg)](https://github.com/hotcodepush-team/cordova-code-push/actions/workflows/ci.yml)
+[![License](https://img.shields.io/npm/l/@hotcodepush/cordova-code-push)](./LICENSE)
+
+`@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air (OTA) updates to your app. Ship a web build fix with one command, reach every installed app within seconds, and roll it back from the console if something goes wrong. No store review, no new build.
 Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordova-code-push).
+
+<a href="https://hotcodepush.com/docs/quickstart">
+  <img alt="Ship updates in seconds. Over-the-air updates for React Native, Expo, Capacitor and Cordova. Get started." src="https://hotcodepush.com/assets/banners/readme-banner-ember.png" width="100%" />
+</a>
+
+## Features
+
+- ⚡️ **One command to release.** `npm run build && npx hotcodepush release create` uploads, signs and publishes your web build for both platforms.
+- 📺 **Channels.** Staging, beta and production, each with its own release log, and promotion between them.
+- 🚀 **Staged rollouts.** Start at 5 percent, widen in steps, and let the automatic pause stop a release that fails on devices.
+- 🛟 **Rollback.** One command or one click sends every device back to the release before.
+- 🔁 **Delta updates.** A device downloads what changed, built on the platform from the bundle it runs.
+- 🔒 **Code signing.** The app runs only bundles signed with your key, which never leaves your machine or your CI.
+- 🎯 **Conditions.** Target a release by binary version, OS version, device attributes or a list of devices.
+- 🖥️ **Console, CLI and GitHub Action.** Watch devices arrive on a release in the console, release from the terminal, or from a workflow step.
+- 🤖 **Built for agents.** An MCP server and agent skills let Claude Code or Cursor set up, release and debug for you.
+- 🌐 **Open source.** The plugin, the CLI, the clients and the Action are MIT licensed.
+
+## Compatibility
+
+| Plugin | cordova-ios | cordova-android | iOS            | Android                |
+| ------ | ----------- | --------------- | -------------- | ---------------------- |
+| 0.x    | 8           | 15 and 14       | 15.0 and later | 7.0 (API 24) and later |
+
+## Demo
+
+[cordova-code-push-demo](https://github.com/hotcodepush-team/cordova-code-push-demo) is a Cordova app with the plugin wired in, built on both platforms and released through the GitHub Action on every merge.
+
+## Guides
+
+- [Quickstart](https://hotcodepush.com/docs/quickstart), the first release end to end
+- [Migrate from CodePush](https://hotcodepush.com/docs/migrate/codepush) or [from Ionic Appflow](https://hotcodepush.com/docs/migrate/ionic-appflow), with the mapping of every command and option
+- [Release from CI](https://hotcodepush.com/docs/ci), GitHub Actions, GitLab, Bitrise, Codemagic and more
 
 ## Installation
 
-`npx hotcodepush init` adds the plugin and writes `hotcodepush.json`.
-By hand, add the plugin and the CLI the native builds call:
+### AI-assisted setup (recommended)
 
-```sh
-cordova plugin add @hotcodepush/cordova-code-push
-npm install --save-dev hotcodepush
+Paste this prompt into the agent or assistant you use:
+
+```text
+Set up HotCodePush OTA updates in this project, following https://hotcodepush.com/docs/quickstart.md. If you can run commands, install the agent skills with `npx skills add hotcodepush-team/skills`, then run hotcodepush-init and hotcodepush-release. If you cannot run commands, read that page and give me the steps to do it myself.
 ```
 
-The plugin needs `cordova-ios` 8, `cordova-android` 14 or 15 and iOS 15 or later, and it wires itself into the native builds.
-The native cores, `HotCodePushCore` on iOS, the prebuilt framework of a core-ios release, and `com.hotcodepush:core-android`, resolve on their own.
+An agent that runs commands adds the plugin, creates the app and the channel, and ships the first update. An assistant without a shell reads the quickstart and hands you the steps. [Agent skills](https://hotcodepush.com/docs/ai/skills) explains what the agent does.
 
-Every native build writes `www/hotcodepush.json` into the app; an Xcode archive or a non-debug Android build also registers the store build in HotCodePush, so it needs `npx hotcodepush login` or `HOTCODEPUSH_TOKEN`.
+### Set up with the CLI
+
+```sh
+npx hotcodepush init
+```
+
+`init` signs you in, picks or creates the app, adds the plugin, writes `hotcodepush.json` and offers a signing key. The plugin wires itself into the native builds. Build the app once in release, an Xcode archive or a non-debug Android build, so the store build registers itself. Then change something and ship it:
+
+```sh
+npm run build && npx hotcodepush release create
+```
+
+The installed app downloads the release at its next start and runs it from the start after that.
+
+Prefer to wire it yourself? The [installation guide](https://hotcodepush.com/docs/sdks/cordova/installation) has the steps by hand: `cordova plugin add @hotcodepush/cordova-code-push`, the CLI as a dev dependency, `hotcodepush.json` and the check with `doctor`.
 
 ## Usage
 
@@ -31,13 +81,12 @@ document.addEventListener('deviceready', async () => {
 });
 ```
 
-The plugin is `window.HotCodePush` once `deviceready` has fired, every method returning a promise; a TypeScript project imports the types from the package.
-With the default `checkStrategy` of `auto`, the SDK checks on start, on resume and in the foreground; `sync()` runs one cycle on demand.
+The plugin is `window.HotCodePush` once `deviceready` has fired, every method returning a promise, and a TypeScript project imports the types from the package.
+With the default `checkStrategy` of `auto`, the SDK checks on start, on resume and in the foreground, and `sync()` runs one cycle on demand.
 Set `downloadStrategy` or `applyStrategy` to `manual` and call `downloadUpdate()` or `applyUpdate()` yourself to control when an update lands.
-A bundle carries your web build, `www`; `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary.
 
-Files from `merges/` and from a plugin's `<asset>` entries land only in each platform's copy of `www` at `cordova prepare`.
-A release built from `www` leaves them out, so after an update a request for one of them gets a 404.
+A bundle carries your web build, `www`. `cordova.js`, `cordova_plugins.js` and `plugins/` always come from the installed binary.
+Files from `merges/` and from a plugin's `<asset>` entries land only in each platform's copy of `www` at `cordova prepare`, so a release built from `www` leaves them out and a request for one of them gets a 404 after an update.
 To ship them, run `npx hotcodepush release create` once per platform with that platform's copy: `--path platforms/ios/www --platform ios`, and `--path platforms/android/app/src/main/assets/www --platform android`.
 
 ## Documentation
@@ -46,21 +95,8 @@ See [hotcodepush.com/docs/sdks/cordova](https://hotcodepush.com/docs/sdks/cordov
 
 ## Development
 
-```sh
-nvm use
-npm ci
-npm run build            # the TypeScript into dist/ and the Android core into src/android/libs; run it before opening the native projects
-npm run lint
-npm test                 # the module, the hook and the Xcode script; the script's tests on macOS only
-npm run test:ios         # the Swift tests, on an iOS simulator
-npm run test:android     # the Kotlin's Robolectric tests
-npm run verify:ios       # a fresh Cordova app with the plugin, built for iOS
-npm run verify:android   # the same app, built for Android
-npm run fmt              # run before every commit
-```
-
-The cores and their tests live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
-`CLAUDE.md` holds the layout and the rules.
+See [CLAUDE.md](./CLAUDE.md) for the layout and the commands, and [CONTRIBUTING.md](https://github.com/hotcodepush-team/.github/blob/main/CONTRIBUTING.md) for the rules of a change.
+The native cores live in [core-ios](https://github.com/hotcodepush-team/core-ios) and [core-android](https://github.com/hotcodepush-team/core-android).
 
 ## License
 
