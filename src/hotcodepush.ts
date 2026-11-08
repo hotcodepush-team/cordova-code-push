@@ -30,10 +30,11 @@ const OPTIONS_SHAPES = {
       options === undefined || isRecordOfOptionalStrings(options, ['reason']),
   },
   setAttributes: {
-    description: 'an object of string or null values',
+    description: '{ attributes: Record<string, string | null> }',
     matches: (options: unknown) =>
       isRecord(options) &&
-      Object.values(options).every(
+      isRecord(options.attributes) &&
+      Object.values(options.attributes).every(
         value => value === null || typeof value === 'string',
       ),
   },

@@ -49,8 +49,9 @@ const WRONG_OPTIONS = [
   ['rollbackUpdate', { reason: 42 }],
   ['setAttributes', undefined],
   ['setAttributes', null],
-  ['setAttributes', ['plan']],
-  ['setAttributes', { plan: 3 }],
+  ['setAttributes', { plan: 'pro' }],
+  ['setAttributes', { attributes: ['plan'] }],
+  ['setAttributes', { attributes: { plan: 3 } }],
   ['setChannel', undefined],
   ['setChannel', {}],
   ['setChannel', { id: 7 }],
@@ -84,8 +85,8 @@ const ACCEPTED_OPTIONS = [
   ['rollbackUpdate', { cause: 'checkout' }, { cause: 'checkout' }],
   [
     'setAttributes',
-    { plan: 'pro', tenant: null },
-    { plan: 'pro', tenant: null },
+    { attributes: { plan: 'pro', tenant: null } },
+    { attributes: { plan: 'pro', tenant: null } },
   ],
   [
     'setChannel',
