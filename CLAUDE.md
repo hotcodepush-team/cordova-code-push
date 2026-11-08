@@ -47,17 +47,17 @@ The plugin layer keeps the bundle loader, the readiness signal and the bridge, n
 Run `npm run fmt` before every commit.
 The package is CommonJS on purpose: Cordova `require`s a plugin's hook script, so the tooling's own modules are `.mjs`.
 
-## Dependencies during the build phase
+## Dependencies
 
-Consumers pin the preview builds pkg.pr.new publishes from `ci.yml` on every push and pull request, never npm: `cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcodepush/cordova-code-push@<sha>`.
-A consumer pins a commit and bumps it deliberately — never `@main`, whose moving content breaks `npm ci` against the lockfile's integrity hash.
-The shared types come from `@hotcodepush/protocol` the same way, pinned to a commit in `package.json`; a protocol change is a bump of that sha.
+Consumers install the npm release, `cordova plugin add @hotcodepush/cordova-code-push`, as the README shows.
+`ci.yml` still publishes every push to `main` and every pull request to pkg.pr.new, so a commit can be tried before its release: `cordova plugin add https://pkg.pr.new/hotcodepush-team/cordova-code-push/@hotcodepush/cordova-code-push@<sha>`, pinned by commit, never `@main`, whose moving content breaks `npm ci` against the lockfile's integrity hash.
+The shared types come from `@hotcodepush/protocol`'s npm release, `^0.2.0` in `package.json`. A protocol change is tried through its pkg.pr.new build by commit, and the pin returns to the release before this package releases.
 
 ## Releases
 
 Release-please keeps a release pull request open on `main`, and merging it tags the release.
 `release.yml` then publishes to npm with provenance over OIDC, `prepublishOnly` running the build first, so the package carries the Android core the build downloads.
-A published package never depends on a pkg.pr.new URL: the protocol pin above moves to its npm release, `^0.1.0`, before this package's first release.
+A published package never depends on a pkg.pr.new URL.
 
 ## Rules
 
