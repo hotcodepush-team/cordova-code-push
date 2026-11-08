@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/hotcodepush-team/cordova-code-push/compare/v0.1.1...v0.2.0) (2026-11-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* setAttributes(attributes) with a flat Record<string, string | null> becomes setAttributes({ attributes }) with { attributes: Record<string, string | null> }.
+
+### Features
+
+* setAttributes takes { attributes } ([#41](https://github.com/hotcodepush-team/cordova-code-push/issues/41)) ([30bea83](https://github.com/hotcodepush-team/cordova-code-push/commit/30bea8369e102c282f4513d45411d72177906135))
+
 ## [0.1.1](https://github.com/hotcodepush-team/cordova-code-push/compare/v0.1.0...v0.1.1) (2026-11-08)
 
 
