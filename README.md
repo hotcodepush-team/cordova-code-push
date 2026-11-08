@@ -7,7 +7,7 @@
 `@hotcodepush/cordova-code-push` is the Cordova plugin that delivers over-the-air (OTA) updates to your app. Ship a web build fix with one command, reach every installed app within seconds, and roll it back from the console if something goes wrong. No store review, no new build.
 Learn more at [hotcodepush.com/cordova-code-push](https://hotcodepush.com/cordova-code-push).
 
-<a href="https://hotcodepush.com/docs/quickstart">
+<a href="https://hotcodepush.com/">
   <img alt="Ship updates in seconds. Over-the-air updates for React Native, Expo, Capacitor and Cordova. Get started." src="https://hotcodepush.com/assets/banners/readme-banner-ember.png" width="100%" />
 </a>
 
