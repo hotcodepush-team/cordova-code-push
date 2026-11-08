@@ -40,6 +40,18 @@ class HotCodePushPluginTest {
     }
 
     @Test
+    fun shouldRejectTheAttributesWhenTheOptionsCarryNoAttributesField() {
+        mockConstruction(Core::class.java).use {
+            initializePlugin()
+            val callbackContext = mock(CallbackContext::class.java)
+
+            plugin.execute("setAttributes", JSONArray().put(JSONObject().put("plan", "pro")), callbackContext)
+
+            verify(callbackContext, timeout(CALL_TIMEOUT_MILLIS)).error("attributes must be an object")
+        }
+    }
+
+    @Test
     fun shouldAnswerSuccessWithNoMessageWhenTheActionReturnsNothing() {
         mockConstruction(Core::class.java).use {
             initializePlugin()

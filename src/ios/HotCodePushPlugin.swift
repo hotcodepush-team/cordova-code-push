@@ -134,19 +134,8 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
     }
 
     @objc(setAttributes:) func setAttributes(_ command: CDVInvokedUrlCommand) {
-        var changes: [String: String?] = [:]
-        for (key, value) in HotCodePushPlugin.options(of: command) {
-            if value is NSNull {
-                changes[key] = .some(nil)
-            } else if let value = value as? String {
-                changes[key] = value
-            } else {
-                reject(command, "An attribute value is a string or null: \(key)")
-                return
-            }
-        }
         run(command) { core in
-            try await core.setAttributes(changes)
+            try await core.setAttributes(HotCodePushPlugin.attributeChanges(from: HotCodePushPlugin.options(of: command)))
             return nil
         }
     }
@@ -196,6 +185,21 @@ public final class HotCodePushPlugin: CDVPlugin, CDVPluginSchemeHandler {
 
     private static func options(of command: CDVInvokedUrlCommand) -> [String: Any] {
         return command.argument(at: 0) as? [String: Any] ?? [:]
+    }
+
+    static func attributeChanges(from options: [String: Any]) throws -> [String: String?] {
+        guard let attributes = options["attributes"] as? [String: Any] else { throw PlainError("attributes must be an object") }
+        var changes: [String: String?] = [:]
+        for (key, value) in attributes {
+            if value is NSNull {
+                changes[key] = .some(nil)
+            } else if let value = value as? String {
+                changes[key] = value
+            } else {
+                throw PlainError("An attribute value is a string or null: \(key)")
+            }
+        }
+        return changes
     }
 
     private static func syncOptions(from options: [String: Any]) throws -> SyncOptions {

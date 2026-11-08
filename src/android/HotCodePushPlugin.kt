@@ -141,7 +141,10 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
                 it.rollbackUpdate(options.optStringOrNull("reason"))
                 null
             }
-            "setAttributes" -> setAttributes(options, callbackContext)
+            "setAttributes" -> run(callbackContext) {
+                it.setAttributes(attributeChanges(options))
+                null
+            }
             "setChannel" -> run(callbackContext) {
                 it.setChannel(channelChoice(options))
                 null
@@ -165,24 +168,6 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         retained?.let { send(it) }
     }
 
-    private fun setAttributes(options: JSONObject, callbackContext: CallbackContext) {
-        val changes = mutableMapOf<String, String?>()
-        for (key in options.keys()) {
-            when {
-                options.isNull(key) -> changes[key] = null
-                options.get(key) is String -> changes[key] = options.getString(key)
-                else -> {
-                    callbackContext.error("An attribute value is a string or null: $key")
-                    return
-                }
-            }
-        }
-        run(callbackContext) {
-            it.setAttributes(changes)
-            null
-        }
-    }
-
     private fun showDebugScreen(callbackContext: CallbackContext) {
         val core = core
         if (core == null) {
@@ -191,6 +176,17 @@ class HotCodePushPlugin : CordovaPlugin(), CoreListener {
         }
         DebugScreen.show(cordova.activity, core)
         callbackContext.success()
+    }
+
+    private fun attributeChanges(options: JSONObject): Map<String, String?> {
+        val attributes = options.optJSONObject("attributes") ?: throw PlainException("attributes must be an object")
+        return attributes.keys().asSequence().associateWith { key ->
+            when {
+                attributes.isNull(key) -> null
+                attributes.get(key) is String -> attributes.getString(key)
+                else -> throw PlainException("An attribute value is a string or null: $key")
+            }
+        }
     }
 
     private fun channelChoice(options: JSONObject): ChannelChoice? =
